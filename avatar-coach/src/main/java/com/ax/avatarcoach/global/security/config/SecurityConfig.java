@@ -27,6 +27,7 @@ public class SecurityConfig {
                     "/login/**",
                     "/error"
                 ).permitAll()
+                .requestMatchers("/api/users/me").authenticated()
                 .anyRequest().permitAll()
             )
             .oauth2Login(oauth2 -> oauth2
