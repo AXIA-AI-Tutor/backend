@@ -25,7 +25,9 @@ public class SecurityConfig {
                     "/api/health",
                     "/oauth2/**",
                     "/login/**",
-                    "/error"
+                    "/error",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**"
                 ).permitAll()
                 .requestMatchers("/api/users/me").authenticated()
                 .anyRequest().permitAll()
