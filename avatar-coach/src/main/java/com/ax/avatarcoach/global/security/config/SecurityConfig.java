@@ -19,8 +19,16 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/health").permitAll() // 임시로 모든 요청 허용
+                .requestMatchers(
+                    "/api/health",
+                    "/oauth2/**",
+                    "/login/**",
+                    "/error"
+                ).permitAll()
                 .anyRequest().permitAll()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .defaultSuccessUrl("/api/health", true)
             );
 
         return http.build();
