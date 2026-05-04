@@ -7,12 +7,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+
+    private static final String INVALID_USER_INFO_ERROR_CODE = "invalid_user_info";
 
     private final UserRepository userRepository;
 
@@ -22,20 +25,33 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         GoogleOAuth2UserInfo userInfo = new GoogleOAuth2UserInfo(oAuth2User.getAttributes());
 
+        String providerUserId = requireAttribute("sub", userInfo.getProviderUserId());
+        String email = requireAttribute("email", userInfo.getEmail());
+
         userRepository.findByProviderAndProviderUserId(
                 OAuthProvider.GOOGLE,
-                userInfo.getProviderUserId()
+                providerUserId
             )
             .orElseGet(() -> userRepository.save(
                 User.createOAuthUser(
-                    userInfo.getEmail(),
+                    email,
                     userInfo.getNickname(),
                     userInfo.getProfileImageUrl(),
                     OAuthProvider.GOOGLE,
-                    userInfo.getProviderUserId()
+                    providerUserId
                 )
             ));
 
         return oAuth2User;
+    }
+
+    private String requireAttribute(String attributeName, String value) {
+        if (value == null || value.isBlank()) {
+            throw new OAuth2AuthenticationException(
+                new OAuth2Error(INVALID_USER_INFO_ERROR_CODE),
+                "Required OAuth attribute is missing: " + attributeName
+            );
+        }
+        return value;
     }
 }
