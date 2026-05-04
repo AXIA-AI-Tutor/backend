@@ -2,6 +2,7 @@ package com.ax.avatarcoach.global.security.config;
 
 import com.ax.avatarcoach.global.security.oauth.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,6 +15,9 @@ public class SecurityConfig {
 
     private final CorsConfigurationSource corsConfigurationSource;
     private final CustomOAuth2UserService customOAuth2UserService;
+
+    @Value("${app.oauth2.success-redirect-url}")
+    private String successRedirectUrl;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -36,7 +40,7 @@ public class SecurityConfig {
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
                 )
-                .defaultSuccessUrl("/api/health", true)
+                .defaultSuccessUrl(successRedirectUrl, true)
             );
 
         return http.build();
