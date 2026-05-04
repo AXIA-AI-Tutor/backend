@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 @Table(name = "sessions")
 public class Session extends BaseTimeEntity {
 
+    private static final int DEFAULT_ANSWER_TIME_LIMIT_SEC = 120;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,20 +22,20 @@ public class Session extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private String mode;
+    private SessionMode mode;
 
-    @Column(length = 100)
-    private String target;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private SessionTarget target;
 
-    @Column(length = 30)
-    private String difficulty;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private SessionDifficulty difficulty;
 
-    @Column(name = "time_limit_sec")
-    private Integer timeLimitSec;
-
-    @Column(name = "focus_areas", length = 255)
-    private String focusAreas;
+    @Column(name = "answer_time_limit_sec", nullable = false)
+    private Integer answerTimeLimitSec;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -49,19 +51,16 @@ public class Session extends BaseTimeEntity {
      */
     public static Session create(
         User user,
-        String mode,
-        String target,
-        String difficulty,
-        Integer timeLimitSec,
-        String focusAreas
+        SessionMode mode,
+        SessionTarget target,
+        SessionDifficulty difficulty
     ) {
         Session session = new Session();
         session.user = user;
         session.mode = mode;
         session.target = target;
         session.difficulty = difficulty;
-        session.timeLimitSec = timeLimitSec;
-        session.focusAreas = focusAreas;
+        session.answerTimeLimitSec = DEFAULT_ANSWER_TIME_LIMIT_SEC;
         session.status = SessionStatus.READY;
         return session;
     }

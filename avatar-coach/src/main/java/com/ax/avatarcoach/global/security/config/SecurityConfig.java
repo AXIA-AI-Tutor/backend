@@ -33,7 +33,10 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
-                .requestMatchers("/api/users/me").authenticated()
+                .requestMatchers(
+                    "/api/users/me",
+                    "/api/sessions/**"
+                ).authenticated()
                 .anyRequest().permitAll()
             )
             .oauth2Login(oauth2 -> oauth2
