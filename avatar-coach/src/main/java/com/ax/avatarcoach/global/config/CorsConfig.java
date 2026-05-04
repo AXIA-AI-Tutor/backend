@@ -16,7 +16,8 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:3000"
+            "http://localhost:3000",
+            "https://dev.ai-coach.kro.kr"
         ));
 
         configuration.setAllowedMethods(List.of(

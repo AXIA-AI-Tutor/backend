@@ -24,3 +24,7 @@ spring:
       hibernate:
         format_sql: false
     show-sql: false
+
+app:
+  oauth2:
+    success-redirect-url: ${OAUTH2_SUCCESS_REDIRECT_URL:https://dev.ai-coach.kro.kr}
