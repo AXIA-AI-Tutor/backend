@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -91,5 +92,20 @@ public class Document extends BaseTimeEntity {
         document.uploadUrlExpiresAt = uploadUrlExpiresAt;
         document.status = DocumentStatus.CREATED;
         return document;
+    }
+
+    public void markUploaded(LocalDateTime uploadedAt) {
+        this.uploadStatus = UploadStatus.UPLOADED;
+        this.status = DocumentStatus.READY_FOR_AI;
+        this.uploadedAt = uploadedAt;
+    }
+
+    public void markUploadFailed() {
+        this.uploadStatus = UploadStatus.FAILED;
+        this.status = DocumentStatus.FAILED;
+    }
+
+    public boolean isOwnedBy(User user) {
+        return this.user != null && user != null && Objects.equals(this.user.getId(), user.getId());
     }
 }
