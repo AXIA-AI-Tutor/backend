@@ -15,6 +15,8 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -46,6 +48,14 @@ public class SessionService {
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 
         return SessionResponse.from(session);
+    }
+
+    public List<SessionResponse> getMySessions(OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+
+        return sessionRepository.findAllByUserOrderByCreatedAtDesc(user).stream()
+            .map(SessionResponse::from)
+            .toList();
     }
 
     private User getCurrentUser(OAuth2User oAuth2User) {
