@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @Tag(name = "Session", description = "연습 세션 API")
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +33,17 @@ public class SessionController {
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
         return ApiResponse.success(sessionService.createSession(request, oAuth2User));
+    }
+
+    @Operation(
+        summary = "내 세션 목록 조회",
+        description = "현재 로그인한 사용자의 세션 목록을 최신순으로 조회합니다."
+    )
+    @GetMapping("/api/sessions")
+    public ApiResponse<List<SessionResponse>> getMySessions(
+        @AuthenticationPrincipal OAuth2User oAuth2User
+    ) {
+        return ApiResponse.success(sessionService.getMySessions(oAuth2User));
     }
 
     @Operation(
