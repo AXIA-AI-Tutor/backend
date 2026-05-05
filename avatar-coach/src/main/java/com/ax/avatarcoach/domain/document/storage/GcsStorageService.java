@@ -1,6 +1,7 @@
 package com.ax.avatarcoach.domain.document.storage;
 
 import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +35,15 @@ public class GcsStorageService implements StorageService {
         );
 
         return new SignedUploadUrl(signedUrl.toString());
+    }
+
+    @Override
+    public ObjectMetadata getObjectMetadata(String bucketName, String objectPath) {
+        BlobId blobId = BlobId.of(bucketName, objectPath);
+        com.google.cloud.storage.Blob blob = storage.get(blobId);
+        if (blob == null || !blob.exists()) {
+            return null;
+        }
+        return new ObjectMetadata(blob.getSize(), blob.getContentType());
     }
 }

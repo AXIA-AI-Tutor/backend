@@ -4,6 +4,7 @@ import com.ax.avatarcoach.domain.document.dto.DocumentUploadUrlRequest;
 import com.ax.avatarcoach.domain.document.dto.DocumentUploadUrlResponse;
 import com.ax.avatarcoach.domain.document.entity.Document;
 import com.ax.avatarcoach.domain.document.entity.StorageProvider;
+import com.ax.avatarcoach.domain.document.entity.UploadStatus;
 import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
 import com.ax.avatarcoach.domain.document.storage.StorageService;
 import com.ax.avatarcoach.domain.session.entity.Session;
@@ -89,6 +90,45 @@ public class DocumentService {
             saved.getUploadUrlExpiresAt(),
             Map.of("Content-Type", request.fileType())
         );
+    }
+
+    @Transactional
+    public Document completeUpload(Long documentId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+        Document document = documentRepository.findById(documentId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        if (!document.isOwnedBy(user)) {
+            throw new CustomException(ErrorCode.DOCUMENT_ACCESS_DENIED);
+        }
+
+        if (document.getUploadStatus() == UploadStatus.UPLOADED) {
+            return document;
+        }
+        if (document.getUploadStatus() != UploadStatus.PENDING) {
+            throw new CustomException(ErrorCode.INVALID_UPLOAD_STATUS);
+        }
+
+        StorageService.ObjectMetadata objectMetadata = storageService.getObjectMetadata(
+            document.getStorageBucket(),
+            document.getStoragePath()
+        );
+
+        if (objectMetadata == null) {
+            document.markUploadFailed();
+            throw new CustomException(ErrorCode.STORAGE_OBJECT_NOT_FOUND);
+        }
+        if (!document.getFileSize().equals(objectMetadata.size())) {
+            document.markUploadFailed();
+            throw new CustomException(ErrorCode.STORAGE_FILE_SIZE_MISMATCH);
+        }
+        if (!document.getFileType().equals(objectMetadata.contentType())) {
+            document.markUploadFailed();
+            throw new CustomException(ErrorCode.STORAGE_CONTENT_TYPE_MISMATCH);
+        }
+
+        document.markUploaded(LocalDateTime.now(ZoneOffset.UTC));
+        return document;
     }
 
     private void validateMetadata(DocumentUploadUrlRequest request) {
