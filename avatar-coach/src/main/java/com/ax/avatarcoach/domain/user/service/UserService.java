@@ -19,16 +19,20 @@ public class UserService {
 
     public UserMeResponse getMe(OAuth2User oAuth2User) {
         if (oAuth2User == null) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
 
         GoogleOAuth2UserInfo userInfo = new GoogleOAuth2UserInfo(oAuth2User.getAttributes());
+        String providerUserId = userInfo.getProviderUserId();
+        if (providerUserId == null || providerUserId.isBlank()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
 
         User user = userRepository.findByProviderAndProviderUserId(
                 OAuthProvider.GOOGLE,
-                userInfo.getProviderUserId()
+                providerUserId
             )
-            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return UserMeResponse.from(user);
     }

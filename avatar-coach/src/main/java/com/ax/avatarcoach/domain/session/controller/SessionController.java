@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -55,5 +56,23 @@ public class SessionController {
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
         return ApiResponse.success(sessionService.getSession(sessionId, oAuth2User));
+    }
+
+    @Operation(summary = "세션 시작", description = "READY 상태의 세션을 IN_PROGRESS 상태로 변경합니다.")
+    @PatchMapping("/api/sessions/{sessionId}/start")
+    public ApiResponse<SessionResponse> startSession(
+        @PathVariable Long sessionId,
+        @AuthenticationPrincipal OAuth2User oAuth2User
+    ) {
+        return ApiResponse.success(sessionService.startSession(sessionId, oAuth2User));
+    }
+
+    @Operation(summary = "세션 종료", description = "IN_PROGRESS 상태의 세션을 COMPLETED 상태로 변경합니다.")
+    @PatchMapping("/api/sessions/{sessionId}/complete")
+    public ApiResponse<SessionResponse> completeSession(
+        @PathVariable Long sessionId,
+        @AuthenticationPrincipal OAuth2User oAuth2User
+    ) {
+        return ApiResponse.success(sessionService.completeSession(sessionId, oAuth2User));
     }
 }
