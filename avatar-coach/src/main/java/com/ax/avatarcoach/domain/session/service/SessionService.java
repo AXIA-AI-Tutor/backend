@@ -48,6 +48,28 @@ public class SessionService {
         return SessionResponse.from(session);
     }
 
+    @Transactional
+    public SessionResponse startSession(Long sessionId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+
+        Session session = sessionRepository.findByIdAndUser(sessionId, user)
+            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+
+        session.start();
+        return SessionResponse.from(session);
+    }
+
+    @Transactional
+    public SessionResponse completeSession(Long sessionId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+
+        Session session = sessionRepository.findByIdAndUser(sessionId, user)
+            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+
+        session.complete();
+        return SessionResponse.from(session);
+    }
+
     private User getCurrentUser(OAuth2User oAuth2User) {
         if (oAuth2User == null) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);

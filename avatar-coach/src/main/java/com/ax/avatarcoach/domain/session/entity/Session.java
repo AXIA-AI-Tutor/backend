@@ -2,6 +2,8 @@ package com.ax.avatarcoach.domain.session.entity;
 
 import com.ax.avatarcoach.domain.user.entity.User;
 import com.ax.avatarcoach.global.common.BaseTimeEntity;
+import com.ax.avatarcoach.global.exception.CustomException;
+import com.ax.avatarcoach.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.Getter;
 
@@ -63,5 +65,23 @@ public class Session extends BaseTimeEntity {
         session.answerTimeLimitSec = DEFAULT_ANSWER_TIME_LIMIT_SEC;
         session.status = SessionStatus.READY;
         return session;
+    }
+
+    public void start() {
+        if (this.status != SessionStatus.READY) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        this.status = SessionStatus.IN_PROGRESS;
+        this.startedAt = LocalDateTime.now();
+    }
+
+    public void complete() {
+        if (this.status != SessionStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        this.status = SessionStatus.COMPLETED;
+        this.completedAt = LocalDateTime.now();
     }
 }
