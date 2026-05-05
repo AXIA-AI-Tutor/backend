@@ -118,10 +118,14 @@ public class SessionService {
         }
 
         GoogleOAuth2UserInfo userInfo = new GoogleOAuth2UserInfo(oAuth2User.getAttributes());
+        String providerUserId = userInfo.getProviderUserId();
+        if (providerUserId == null || providerUserId.isBlank()) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
 
         return userRepository.findByProviderAndProviderUserId(
                 OAuthProvider.GOOGLE,
-                userInfo.getProviderUserId()
+                providerUserId
             )
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
     }
