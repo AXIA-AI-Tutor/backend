@@ -26,7 +26,10 @@ public class SessionController {
 
     private final SessionService sessionService;
 
-    @Operation(summary = "세션 생성", description = "현재 로그인한 사용자의 연습 세션을 생성합니다.")
+    @Operation(
+        summary = "세션 생성",
+        description = "현재 로그인한 사용자의 연습 세션을 생성합니다. 생성된 세션은 READY 상태로 시작합니다."
+    )
     @PostMapping("/api/sessions")
     public ApiResponse<SessionResponse> createSession(
         @Valid @RequestBody SessionCreateRequest request,
@@ -48,7 +51,7 @@ public class SessionController {
 
     @Operation(
         summary = "세션 단건 조회",
-        description = "현재 로그인한 사용자의 세션 정보를 조회합니다."
+        description = "현재 로그인한 사용자의 특정 세션 정보를 조회합니다."
     )
     @GetMapping("/api/sessions/{sessionId}")
     public ApiResponse<SessionResponse> getSession(
@@ -58,7 +61,10 @@ public class SessionController {
         return ApiResponse.success(sessionService.getSession(sessionId, oAuth2User));
     }
 
-    @Operation(summary = "세션 시작", description = "READY 상태의 세션을 IN_PROGRESS 상태로 변경합니다.")
+    @Operation(
+        summary = "세션 시작",
+        description = "READY 상태의 세션을 IN_PROGRESS 상태로 변경하고 시작 시각을 기록합니다."
+    )
     @PatchMapping("/api/sessions/{sessionId}/start")
     public ApiResponse<SessionResponse> startSession(
         @PathVariable Long sessionId,
@@ -67,7 +73,10 @@ public class SessionController {
         return ApiResponse.success(sessionService.startSession(sessionId, oAuth2User));
     }
 
-    @Operation(summary = "세션 종료", description = "IN_PROGRESS 상태의 세션을 COMPLETED 상태로 변경합니다.")
+    @Operation(
+        summary = "세션 종료",
+        description = "IN_PROGRESS 상태의 세션을 COMPLETED 상태로 변경하고 종료 시각을 기록합니다."
+    )
     @PatchMapping("/api/sessions/{sessionId}/complete")
     public ApiResponse<SessionResponse> completeSession(
         @PathVariable Long sessionId,
