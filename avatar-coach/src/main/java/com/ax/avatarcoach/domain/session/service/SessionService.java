@@ -56,6 +56,7 @@ public class SessionService {
         return sessionRepository.findAllByUserOrderByCreatedAtDesc(user).stream()
             .map(SessionResponse::from)
             .toList();
+    }
 
     @Transactional
     public SessionResponse startSession(Long sessionId, OAuth2User oAuth2User) {
