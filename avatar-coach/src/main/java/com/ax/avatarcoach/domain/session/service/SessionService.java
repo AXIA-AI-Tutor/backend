@@ -1,6 +1,7 @@
 package com.ax.avatarcoach.domain.session.service;
 
 import com.ax.avatarcoach.domain.session.dto.SessionCreateRequest;
+import com.ax.avatarcoach.domain.session.dto.SessionEventResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionResponse;
 import com.ax.avatarcoach.domain.session.entity.Session;
 import com.ax.avatarcoach.domain.session.entity.SessionEventType;
@@ -100,6 +101,15 @@ public class SessionService {
         );
 
         return SessionResponse.from(session);
+    }
+
+    public List<SessionEventResponse> getSessionEvents(Long sessionId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+
+        Session session = sessionRepository.findByIdAndUser(sessionId, user)
+            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+
+        return sessionEventService.getSessionEvents(session);
     }
 
     private User getCurrentUser(OAuth2User oAuth2User) {
