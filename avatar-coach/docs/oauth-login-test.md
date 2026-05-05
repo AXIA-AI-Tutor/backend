@@ -164,13 +164,26 @@ http://localhost:8080/api/users/me
 - JWT, Refresh Token, Redis는 사용하지 않는다.
 - 현재 로그인 방식은 Spring Security OAuth2 session 기반이다.
 - 브라우저는 `JSESSIONID` cookie로 로그인 상태를 유지한다.
-- 프론트엔드는 API 요청 시 cookie가 포함되도록 설정해야 한다.
+- 세션 쿠키가 요청에 포함되지 않으면 로그인 이후에도 미인증 상태처럼 동작할 수 있다.
+
+## 프론트엔드 요청 필수 조건 (세션 쿠키 기반 OAuth)
+
+- `/api/users/me` 같은 인증 필요 API 호출 시 `fetch`는 반드시 `credentials: "include"`를 사용한다.
+- `axios` 사용 시 요청 또는 인스턴스에 반드시 `withCredentials: true`를 설정한다.
+- 로컬 개발에서 프론트(`http://localhost:3000`)와 백엔드(`http://localhost:8080`) 주소가 다르면 CORS credentials 허용 설정(`Access-Control-Allow-Credentials`)도 함께 확인한다.
 
 프론트 요청 예시:
 
 ```javascript
 fetch("http://localhost:8080/api/users/me", {
   credentials: "include",
+});
+```
+
+```javascript
+const api = axios.create({
+  baseURL: "http://localhost:8080",
+  withCredentials: true,
 });
 ```
 
