@@ -3,6 +3,7 @@ package com.ax.avatarcoach.domain.session.service;
 import com.ax.avatarcoach.domain.session.dto.SessionCreateRequest;
 import com.ax.avatarcoach.domain.session.dto.SessionResponse;
 import com.ax.avatarcoach.domain.session.entity.Session;
+import com.ax.avatarcoach.domain.session.entity.SessionEventType;
 import com.ax.avatarcoach.domain.session.repository.SessionRepository;
 import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
 import com.ax.avatarcoach.domain.user.entity.User;
@@ -24,6 +25,7 @@ public class SessionService {
 
     private final SessionRepository sessionRepository;
     private final UserRepository userRepository;
+    private final SessionEventService sessionEventService;
 
     @Transactional
     public SessionResponse createSession(SessionCreateRequest request, OAuth2User oAuth2User) {
@@ -37,6 +39,12 @@ public class SessionService {
         );
 
         Session savedSession = sessionRepository.save(session);
+
+        sessionEventService.recordEvent(
+            savedSession,
+            SessionEventType.SESSION_CREATED,
+            null
+        );
 
         return SessionResponse.from(savedSession);
     }
@@ -66,6 +74,13 @@ public class SessionService {
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 
         session.start();
+
+        sessionEventService.recordEvent(
+            session,
+            SessionEventType.SESSION_STARTED,
+            null
+        );
+
         return SessionResponse.from(session);
     }
 
@@ -77,6 +92,13 @@ public class SessionService {
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 
         session.complete();
+
+        sessionEventService.recordEvent(
+            session,
+            SessionEventType.SESSION_COMPLETED,
+            null
+        );
+
         return SessionResponse.from(session);
     }
 
