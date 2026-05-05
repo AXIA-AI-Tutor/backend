@@ -7,3 +7,9 @@ spring:
 
   jpa:
     open-in-view: false
+
+gcp:
+  storage:
+    bucket-name: ${GCS_BUCKET_NAME:}
+    document-prefix: ${GCS_DOCUMENT_PREFIX:documents}
+    signed-url-expiration-minutes: ${GCS_SIGNED_URL_EXPIRATION_MINUTES:10}
