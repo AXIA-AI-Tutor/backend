@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -21,6 +22,7 @@ public class SecurityConfig {
     private final CorsConfigurationSource corsConfigurationSource;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final ObjectMapper objectMapper;
+    private final InternalApiKeyAuthFilter internalApiKeyAuthFilter;
 
     @Value("${app.oauth2.success-redirect-url}")
     private String successRedirectUrl;
@@ -39,6 +41,7 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/v3/api-docs/**"
                 ).permitAll()
+                .requestMatchers("/internal/**").permitAll()
                 .requestMatchers(
                     "/api/users/me",
                     "/api/sessions/**",
@@ -62,7 +65,8 @@ public class SecurityConfig {
                     .userService(customOAuth2UserService)
                 )
                 .defaultSuccessUrl(successRedirectUrl, true)
-            );
+            )
+            .addFilterBefore(internalApiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -4,6 +4,7 @@ import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
 import com.ax.avatarcoach.domain.feedback.dto.FeedbackCreateRequest;
 import com.ax.avatarcoach.domain.feedback.dto.FeedbackResponse;
+import com.ax.avatarcoach.domain.feedback.dto.InternalFeedbackCreateRequest;
 import com.ax.avatarcoach.domain.feedback.entity.Feedback;
 import com.ax.avatarcoach.domain.feedback.repository.FeedbackRepository;
 import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
@@ -27,7 +28,7 @@ public class FeedbackService {
     private final UserRepository userRepository;
 
     @Transactional
-    public FeedbackResponse createFeedback(FeedbackCreateRequest request, OAuth2User oAuth2User) {
+    public FeedbackResponse createFeedbackForUser(FeedbackCreateRequest request, OAuth2User oAuth2User) {
         User user = getCurrentUser(oAuth2User);
 
         Answer answer = answerRepository.findById(request.answerId())
@@ -37,7 +38,18 @@ public class FeedbackService {
             throw new CustomException(ErrorCode.ANSWER_ACCESS_DENIED);
         }
 
-        validateRequest(request);
+        return createFeedbackInternal(answer.getId(), new InternalFeedbackCreateRequest(
+            request.summary(), request.evidence(), request.improvementExample(), request.structureScore(),
+            request.specificityScore(), request.relevanceScore(), request.deliveryScore()
+        ));
+    }
+
+    @Transactional
+    public FeedbackResponse createFeedbackInternal(Long answerId, InternalFeedbackCreateRequest request) {
+        Answer answer = answerRepository.findById(answerId)
+            .orElseThrow(() -> new CustomException(ErrorCode.ANSWER_NOT_FOUND));
+
+        validateRequest(request.summary(), request.structureScore(), request.specificityScore(), request.relevanceScore(), request.deliveryScore());
 
         Feedback feedback = Feedback.create(
             answer,
@@ -53,14 +65,14 @@ public class FeedbackService {
         return FeedbackResponse.from(feedbackRepository.save(feedback));
     }
 
-    private void validateRequest(FeedbackCreateRequest request) {
-        if (request.summary() == null || request.summary().isBlank()) {
+    private void validateRequest(String summary, Integer structureScore, Integer specificityScore, Integer relevanceScore, Integer deliveryScore) {
+        if (summary == null || summary.isBlank()) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
-        validateScoreRange(request.structureScore());
-        validateScoreRange(request.specificityScore());
-        validateScoreRange(request.relevanceScore());
-        validateScoreRange(request.deliveryScore());
+        validateScoreRange(structureScore);
+        validateScoreRange(specificityScore);
+        validateScoreRange(relevanceScore);
+        validateScoreRange(deliveryScore);
     }
 
     private void validateScoreRange(Integer score) {

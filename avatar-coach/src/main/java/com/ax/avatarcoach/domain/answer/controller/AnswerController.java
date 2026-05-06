@@ -29,7 +29,7 @@ public class AnswerController {
         @Valid @RequestBody AnswerCreateRequest request,
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
-        return ApiResponse.success(answerService.createAnswer(request, oAuth2User));
+        return ApiResponse.success(answerService.createAnswerForUser(request, oAuth2User));
     }
 
     @Operation(summary = "세션별 답변 목록 조회", description = "현재 로그인한 사용자의 세션에 속한 답변 목록을 생성일(createdAt) 오름차순으로 조회합니다.")
