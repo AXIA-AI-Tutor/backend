@@ -1,8 +1,8 @@
 package com.ax.avatarcoach.domain.session.controller;
 
-import com.ax.avatarcoach.domain.session.dto.SessionCreateRequest;
 import com.ax.avatarcoach.domain.session.dto.SessionEventResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionResponse;
+import com.ax.avatarcoach.domain.session.dto.SessionStartRequest;
 import com.ax.avatarcoach.domain.session.service.SessionService;
 import com.ax.avatarcoach.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,13 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,14 +25,13 @@ public class SessionController {
 
     @Operation(
         summary = "세션 생성",
-        description = "현재 로그인한 사용자의 연습 세션을 생성합니다. 생성된 세션은 READY 상태로 시작합니다."
+        description = "현재 로그인한 사용자의 연습 준비 세션을 생성합니다. 생성된 세션은 READY 상태이며, 문서 업로드와 옵션 선택에 사용할 sessionId를 반환합니다."
     )
     @PostMapping
     public ApiResponse<SessionResponse> createSession(
-        @Valid @RequestBody SessionCreateRequest request,
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
-        return ApiResponse.success(sessionService.createSession(request, oAuth2User));
+        return ApiResponse.success(sessionService.createSession(oAuth2User));
     }
 
     @Operation(
@@ -66,14 +59,15 @@ public class SessionController {
 
     @Operation(
         summary = "세션 시작",
-        description = "READY 상태의 세션을 IN_PROGRESS 상태로 변경하고 시작 시각을 기록합니다."
+        description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다."
     )
     @PatchMapping("/{sessionId}/start")
     public ApiResponse<SessionResponse> startSession(
         @PathVariable Long sessionId,
+        @Valid @RequestBody SessionStartRequest request,
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
-        return ApiResponse.success(sessionService.startSession(sessionId, oAuth2User));
+        return ApiResponse.success(sessionService.startSession(sessionId, request, oAuth2User));
     }
 
     @Operation(
