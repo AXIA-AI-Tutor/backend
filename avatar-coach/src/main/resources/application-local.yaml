@@ -33,7 +33,7 @@ app:
 
 ai:
   server:
-    base-url: ${AI_SERVER_BASE_URL:http://localhost:8011}
+    base-url: ${AI_SERVER_BASE_URL:http://localhost:8000}
 
 gcp:
   storage:
