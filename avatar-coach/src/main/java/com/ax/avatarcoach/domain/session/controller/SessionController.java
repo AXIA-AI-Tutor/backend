@@ -59,7 +59,7 @@ public class SessionController {
 
     @Operation(
         summary = "세션 시작",
-        description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다."
+        description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다. 세션을 시작하려면 READY_FOR_AI 상태의 업로드 완료 문서가 1개 이상 필요합니다."
     )
     @PatchMapping("/{sessionId}/start")
     public ApiResponse<SessionResponse> startSession(

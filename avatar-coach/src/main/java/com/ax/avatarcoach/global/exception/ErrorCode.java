@@ -13,6 +13,7 @@ public enum ErrorCode {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "잘못된 요청입니다."),
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SESSION_NOT_FOUND", "세션을 찾을 수 없습니다."),
     SESSION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "SESSION_ACCESS_DENIED", "해당 세션에 접근할 수 없습니다."),
+    SESSION_DOCUMENT_REQUIRED(HttpStatus.BAD_REQUEST, "SESSION_DOCUMENT_REQUIRED", "세션을 시작하려면 업로드 완료된 문서가 필요합니다."),
     ANSWER_NOT_FOUND(HttpStatus.NOT_FOUND, "ANSWER_NOT_FOUND", "답변을 찾을 수 없습니다."),
     ANSWER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ANSWER_ACCESS_DENIED", "해당 답변에 접근할 수 없습니다."),
     DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "DOCUMENT_NOT_FOUND", "문서를 찾을 수 없습니다."),

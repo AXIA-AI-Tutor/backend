@@ -1,5 +1,7 @@
 package com.ax.avatarcoach.domain.session.service;
 
+import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
+import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
 import com.ax.avatarcoach.domain.session.dto.SessionEventResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionStartRequest;
@@ -27,6 +29,7 @@ public class SessionService {
     private final SessionRepository sessionRepository;
     private final UserRepository userRepository;
     private final SessionEventService sessionEventService;
+    private final DocumentRepository documentRepository;
 
     @Transactional
     public SessionResponse createSession(OAuth2User oAuth2User) {
@@ -72,6 +75,16 @@ public class SessionService {
 
         Session session = sessionRepository.findByIdAndUser(sessionId, user)
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+
+        boolean hasReadyDocument = documentRepository.existsBySessionIdAndUserIdAndStatus(
+            sessionId,
+            user.getId(),
+            DocumentStatus.READY_FOR_AI
+        );
+
+        if (!hasReadyDocument) {
+            throw new CustomException(ErrorCode.SESSION_DOCUMENT_REQUIRED);
+        }
 
         session.start(
             request.mode(),
