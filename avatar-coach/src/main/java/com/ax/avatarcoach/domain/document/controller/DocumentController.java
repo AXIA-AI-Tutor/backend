@@ -1,5 +1,7 @@
 package com.ax.avatarcoach.domain.document.controller;
 
+import com.ax.avatarcoach.domain.document.dto.DocumentMetadataCreateRequest;
+import com.ax.avatarcoach.domain.document.dto.DocumentMetadataResponse;
 import com.ax.avatarcoach.domain.document.dto.DocumentUploadUrlRequest;
 import com.ax.avatarcoach.domain.document.dto.DocumentUploadUrlResponse;
 import com.ax.avatarcoach.domain.document.dto.DocumentResponse;
@@ -24,6 +26,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class DocumentController {
 
     private final DocumentService documentService;
+
+    @Operation(summary = "문서 메타데이터 저장", description = "현재 로그인 사용자의 문서 메타데이터를 저장합니다.")
+    @PostMapping("/metadata")
+    public ApiResponse<DocumentMetadataResponse> createMetadata(
+        @Valid @RequestBody DocumentMetadataCreateRequest request,
+        @AuthenticationPrincipal OAuth2User oAuth2User
+    ) {
+        return ApiResponse.success(documentService.createMetadata(request, oAuth2User));
+    }
 
     @Operation(summary = "업로드 URL 발급", description = "현재 로그인 사용자의 문서 업로드용 GCS Signed URL을 발급합니다.")
     @PostMapping("/upload-url")
