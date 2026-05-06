@@ -2,6 +2,8 @@ package com.ax.avatarcoach.global.ai.client;
 
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateResponse;
+import com.ax.avatarcoach.global.ai.client.dto.AiTurnRequest;
+import com.ax.avatarcoach.global.ai.client.dto.AiTurnResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -28,5 +30,13 @@ public class AiGatewayClient {
             .body(request)
             .retrieve()
             .body(AiQuestionGenerateResponse.class);
+    }
+
+    public AiTurnResponse evaluateTurn(AiTurnRequest request) {
+        return aiRestClient.post()
+            .uri("/api/ai/turn")
+            .body(request)
+            .retrieve()
+            .body(AiTurnResponse.class);
     }
 }

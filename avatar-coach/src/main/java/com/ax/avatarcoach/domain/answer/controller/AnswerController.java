@@ -2,6 +2,8 @@ package com.ax.avatarcoach.domain.answer.controller;
 
 import com.ax.avatarcoach.domain.answer.dto.AnswerCreateRequest;
 import com.ax.avatarcoach.domain.answer.dto.AnswerResponse;
+import com.ax.avatarcoach.domain.answer.dto.AnswerSubmitRequest;
+import com.ax.avatarcoach.domain.answer.dto.AnswerWithFeedbackResponse;
 import com.ax.avatarcoach.domain.feedback.dto.FeedbackResponse;
 import com.ax.avatarcoach.domain.answer.service.AnswerService;
 import com.ax.avatarcoach.global.response.ApiResponse;
@@ -57,5 +59,18 @@ public class AnswerController {
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
         return ApiResponse.success(answerService.getAnswerFeedbacks(answerId, oAuth2User));
+    }
+
+    @Operation(
+        summary = "답변 제출 및 AI 피드백 생성",
+        description = "현재 로그인한 사용자가 특정 세션에 답변을 제출하면 Answer를 저장하고, AI 서버 평가 결과로 Feedback을 생성합니다."
+    )
+    @PostMapping("/sessions/{sessionId}/answers/with-feedback")
+    public ApiResponse<AnswerWithFeedbackResponse> submitAnswerWithFeedback(
+        @PathVariable Long sessionId,
+        @Valid @RequestBody AnswerSubmitRequest request,
+        @AuthenticationPrincipal OAuth2User oAuth2User
+    ) {
+        return ApiResponse.success(answerService.submitAnswerWithFeedback(sessionId, request, oAuth2User));
     }
 }
