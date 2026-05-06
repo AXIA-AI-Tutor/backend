@@ -1,8 +1,8 @@
 package com.ax.avatarcoach.domain.session.service;
 
-import com.ax.avatarcoach.domain.session.dto.SessionCreateRequest;
 import com.ax.avatarcoach.domain.session.dto.SessionEventResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionResponse;
+import com.ax.avatarcoach.domain.session.dto.SessionStartRequest;
 import com.ax.avatarcoach.domain.session.entity.Session;
 import com.ax.avatarcoach.domain.session.entity.SessionEventType;
 import com.ax.avatarcoach.domain.session.repository.SessionRepository;
@@ -29,15 +29,10 @@ public class SessionService {
     private final SessionEventService sessionEventService;
 
     @Transactional
-    public SessionResponse createSession(SessionCreateRequest request, OAuth2User oAuth2User) {
+    public SessionResponse createSession(OAuth2User oAuth2User) {
         User user = getCurrentUser(oAuth2User);
 
-        Session session = Session.create(
-            user,
-            request.mode(),
-            request.target(),
-            request.difficulty()
-        );
+        Session session = Session.create(user);
 
         Session savedSession = sessionRepository.save(session);
 
@@ -68,13 +63,21 @@ public class SessionService {
     }
 
     @Transactional
-    public SessionResponse startSession(Long sessionId, OAuth2User oAuth2User) {
+    public SessionResponse startSession(
+        Long sessionId,
+        SessionStartRequest request,
+        OAuth2User oAuth2User
+    ) {
         User user = getCurrentUser(oAuth2User);
 
         Session session = sessionRepository.findByIdAndUser(sessionId, user)
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 
-        session.start();
+        session.start(
+            request.mode(),
+            request.target(),
+            request.difficulty()
+        );
 
         sessionEventService.recordEvent(
             session,
