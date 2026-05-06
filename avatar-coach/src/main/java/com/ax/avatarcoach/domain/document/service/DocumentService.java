@@ -209,7 +209,7 @@ public class DocumentService {
 
     private String sanitizeFileName(String originalFileName) {
         String sanitized = originalFileName.replaceAll("[\\\\/]+", "_")
-            .replaceAll("\.\.+", ".")
+            .replaceAll("\\.{2,}", ".")
             .replaceAll("[^a-zA-Z0-9._-]", "_");
         if (sanitized.isBlank()) {
             throw new CustomException(ErrorCode.INVALID_FILE_NAME);
