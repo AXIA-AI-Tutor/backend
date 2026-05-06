@@ -58,19 +58,19 @@ public class ReportService {
         Session session = sessionRepository.findByIdAndUser(sessionId, user)
             .orElseThrow(() -> new CustomException(ErrorCode.SESSION_NOT_FOUND));
 
-        // 리포트는 최종 결과라서 COMPLETED 이후 생성
+        // 리포트는 최종 결과이므로 COMPLETED 이후 생성
         if (session.getStatus() != SessionStatus.COMPLETED) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
+            throw new CustomException(ErrorCode.SESSION_NOT_COMPLETED);
         }
 
         if (reportRepository.existsBySessionId(session.getId())) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
+            throw new CustomException(ErrorCode.REPORT_ALREADY_EXISTS);
         }
 
         List<Answer> answers = answerRepository.findAllBySessionIdOrderByCreatedAtAsc(session.getId());
 
         if (answers.isEmpty()) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
+            throw new CustomException(ErrorCode.REPORT_ANSWER_REQUIRED);
         }
 
         List<AiReportGenerateRequest.AnswerItem> answerItems = answers.stream()

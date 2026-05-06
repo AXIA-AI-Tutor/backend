@@ -20,7 +20,7 @@ public class ReportController {
 
     @Operation(
         summary = "세션별 리포트 조회",
-        description = "현재 로그인한 사용자의 특정 세션에 생성된 리포트를 조회합니다."
+        description = "현재 로그인한 사용자의 특정 세션에 생성된 리포트를 조회합니다. 리포트가 아직 생성되지 않은 경우 REPORT_NOT_FOUND를 반환합니다."
     )
     @GetMapping
     public ApiResponse<ReportResponse> getSessionReport(
