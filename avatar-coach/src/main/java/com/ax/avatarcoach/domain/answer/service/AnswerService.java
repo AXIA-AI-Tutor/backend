@@ -4,6 +4,8 @@ import com.ax.avatarcoach.domain.answer.dto.AnswerCreateRequest;
 import com.ax.avatarcoach.domain.answer.dto.AnswerResponse;
 import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
+import com.ax.avatarcoach.domain.feedback.dto.FeedbackResponse;
+import com.ax.avatarcoach.domain.feedback.repository.FeedbackRepository;
 import com.ax.avatarcoach.domain.session.entity.Session;
 import com.ax.avatarcoach.domain.session.repository.SessionRepository;
 import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
@@ -17,14 +19,48 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AnswerService {
 
     private final AnswerRepository answerRepository;
+    private final FeedbackRepository feedbackRepository;
     private final SessionRepository sessionRepository;
     private final UserRepository userRepository;
+
+    public List<AnswerResponse> getSessionAnswers(Long sessionId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+
+        sessionRepository.findByIdAndUser(sessionId, user)
+            .orElseThrow(() -> new CustomException(ErrorCode.SESSION_NOT_FOUND));
+
+        return answerRepository.findAllBySessionIdOrderByCreatedAtAsc(sessionId).stream()
+            .map(AnswerResponse::from)
+            .toList();
+    }
+
+    public AnswerResponse getAnswer(Long answerId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+
+        Answer answer = answerRepository.findByIdAndSessionUserId(answerId, user.getId())
+            .orElseThrow(() -> new CustomException(ErrorCode.ANSWER_NOT_FOUND));
+
+        return AnswerResponse.from(answer);
+    }
+
+    public List<FeedbackResponse> getAnswerFeedbacks(Long answerId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+
+        answerRepository.findByIdAndSessionUserId(answerId, user.getId())
+            .orElseThrow(() -> new CustomException(ErrorCode.ANSWER_NOT_FOUND));
+
+        return feedbackRepository.findAllByAnswerIdOrderByCreatedAtAsc(answerId).stream()
+            .map(FeedbackResponse::from)
+            .toList();
+    }
 
     @Transactional
     public AnswerResponse createAnswer(AnswerCreateRequest request, OAuth2User oAuth2User) {
