@@ -3,6 +3,7 @@ package com.ax.avatarcoach.domain.session.controller;
 import com.ax.avatarcoach.domain.session.dto.SessionEventResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionStartRequest;
+import com.ax.avatarcoach.domain.session.dto.SessionStartResponse;
 import com.ax.avatarcoach.domain.session.service.SessionService;
 import com.ax.avatarcoach.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,10 +60,10 @@ public class SessionController {
 
     @Operation(
         summary = "세션 시작",
-        description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다. 세션을 시작하려면 READY_FOR_AI 상태의 업로드 완료 문서가 1개 이상 필요합니다."
+        description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다. READY_FOR_AI 상태의 업로드 완료 문서가 1개 이상 필요합니다. 세션 시작 성공 시 AI 서버에서 첫 번째 질문을 생성하여 함께 반환합니다."
     )
     @PatchMapping("/{sessionId}/start")
-    public ApiResponse<SessionResponse> startSession(
+    public ApiResponse<SessionStartResponse> startSession(
         @PathVariable Long sessionId,
         @Valid @RequestBody SessionStartRequest request,
         @AuthenticationPrincipal OAuth2User oAuth2User

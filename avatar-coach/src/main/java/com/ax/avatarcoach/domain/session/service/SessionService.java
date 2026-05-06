@@ -5,12 +5,16 @@ import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
 import com.ax.avatarcoach.domain.session.dto.SessionEventResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionResponse;
 import com.ax.avatarcoach.domain.session.dto.SessionStartRequest;
+import com.ax.avatarcoach.domain.session.dto.SessionStartResponse;
 import com.ax.avatarcoach.domain.session.entity.Session;
 import com.ax.avatarcoach.domain.session.entity.SessionEventType;
 import com.ax.avatarcoach.domain.session.repository.SessionRepository;
 import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
 import com.ax.avatarcoach.domain.user.entity.User;
 import com.ax.avatarcoach.domain.user.repository.UserRepository;
+import com.ax.avatarcoach.global.ai.client.AiGatewayClient;
+import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
+import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateResponse;
 import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import com.ax.avatarcoach.global.security.oauth.GoogleOAuth2UserInfo;
@@ -30,6 +34,7 @@ public class SessionService {
     private final UserRepository userRepository;
     private final SessionEventService sessionEventService;
     private final DocumentRepository documentRepository;
+    private final AiGatewayClient aiGatewayClient;
 
     @Transactional
     public SessionResponse createSession(OAuth2User oAuth2User) {
@@ -66,7 +71,7 @@ public class SessionService {
     }
 
     @Transactional
-    public SessionResponse startSession(
+    public SessionStartResponse startSession(
         Long sessionId,
         SessionStartRequest request,
         OAuth2User oAuth2User
@@ -98,7 +103,24 @@ public class SessionService {
             null
         );
 
-        return SessionResponse.from(session);
+        AiQuestionGenerateRequest aiRequest = new AiQuestionGenerateRequest(
+            user.getId(),
+            session.getId(),
+            session.getMode().name(),
+            session.getTarget().name(),
+            session.getDifficulty().name(),
+            session.getAnswerTimeLimitSec(),
+            1,
+            List.of(),
+            List.of()
+        );
+
+        AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
+
+        return SessionStartResponse.of(
+            SessionResponse.from(session),
+            aiQuestion
+        );
     }
 
     @Transactional
