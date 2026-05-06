@@ -1,7 +1,9 @@
 package com.ax.avatarcoach.domain.document.service;
 
+import com.ax.avatarcoach.domain.document.dto.DocumentMetadataCreateRequest;
 import com.ax.avatarcoach.domain.document.dto.DocumentUploadUrlRequest;
 import com.ax.avatarcoach.domain.document.dto.DocumentUploadUrlResponse;
+import com.ax.avatarcoach.domain.document.dto.DocumentMetadataResponse;
 import com.ax.avatarcoach.domain.document.entity.Document;
 import com.ax.avatarcoach.domain.document.entity.StorageProvider;
 import com.ax.avatarcoach.domain.document.entity.UploadStatus;
@@ -17,6 +19,9 @@ import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import com.ax.avatarcoach.global.security.oauth.GoogleOAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,12 +52,39 @@ public class DocumentService {
     private final GcpStorageProperties gcpStorageProperties;
 
     @Transactional
+    public DocumentMetadataResponse createMetadata(DocumentMetadataCreateRequest request, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+        Session session = sessionRepository.findByIdAndUser(request.sessionId(), user)
+            .orElseThrow(() -> new CustomException(ErrorCode.SESSION_NOT_FOUND));
+
+        validateMetadata(request.originalFileName(), request.fileSize(), request.fileType());
+
+        String sanitizedFileName = sanitizeFileName(request.originalFileName());
+        String storagePath = buildStoragePath(user.getId(), session.getId(), sanitizedFileName);
+
+        Document document = Document.create(
+            user,
+            session,
+            request.docType(),
+            request.originalFileName(),
+            request.fileType(),
+            request.fileSize(),
+            StorageProvider.GCS,
+            gcpStorageProperties.bucketName(),
+            storagePath,
+            null
+        );
+
+        return DocumentMetadataResponse.from(documentRepository.save(document));
+    }
+
+    @Transactional
     public DocumentUploadUrlResponse issueUploadUrl(DocumentUploadUrlRequest request, OAuth2User oAuth2User) {
         User user = getCurrentUser(oAuth2User);
         Session session = sessionRepository.findByIdAndUser(request.sessionId(), user)
             .orElseThrow(() -> new CustomException(ErrorCode.SESSION_NOT_FOUND));
 
-        validateMetadata(request);
+        validateMetadata(request.originalFileName(), request.fileSize(), request.fileType());
 
         String sanitizedFileName = sanitizeFileName(request.originalFileName());
         String storagePath = buildStoragePath(user.getId(), session.getId(), sanitizedFileName);
@@ -131,17 +163,40 @@ public class DocumentService {
         return document;
     }
 
-    private void validateMetadata(DocumentUploadUrlRequest request) {
-        if (request.originalFileName() == null || request.originalFileName().isBlank()) {
+
+    public DocumentMetadataResponse getMyDocument(Long documentId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+        Document document = documentRepository.findById(documentId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        if (!document.isOwnedBy(user)) {
+            throw new CustomException(ErrorCode.DOCUMENT_ACCESS_DENIED);
+        }
+
+        return DocumentMetadataResponse.from(document);
+    }
+
+    public Page<DocumentMetadataResponse> getMySessionDocuments(Long sessionId, int page, int size, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+        sessionRepository.findByIdAndUserId(sessionId, user.getId())
+            .orElseThrow(() -> new CustomException(ErrorCode.SESSION_ACCESS_DENIED));
+
+        Pageable pageable = PageRequest.of(page, size);
+        return documentRepository.findAllBySessionIdAndUserIdOrderByCreatedAtDesc(sessionId, user.getId(), pageable)
+            .map(DocumentMetadataResponse::from);
+    }
+
+    private void validateMetadata(String originalFileName, Long fileSize, String fileType) {
+        if (originalFileName == null || originalFileName.isBlank()) {
             throw new CustomException(ErrorCode.INVALID_FILE_NAME);
         }
-        if (request.fileSize() == null || request.fileSize() <= 0) {
+        if (fileSize == null || fileSize <= 0) {
             throw new CustomException(ErrorCode.INVALID_FILE_SIZE);
         }
-        if (request.fileSize() > MAX_FILE_SIZE_BYTES) {
+        if (fileSize > MAX_FILE_SIZE_BYTES) {
             throw new CustomException(ErrorCode.FILE_SIZE_EXCEEDED);
         }
-        if (request.fileType() == null || !ALLOWED_FILE_TYPES.contains(request.fileType())) {
+        if (fileType == null || !ALLOWED_FILE_TYPES.contains(fileType)) {
             throw new CustomException(ErrorCode.UNSUPPORTED_FILE_TYPE);
         }
     }
