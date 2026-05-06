@@ -2,6 +2,8 @@ package com.ax.avatarcoach.global.ai.client;
 
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateResponse;
+import com.ax.avatarcoach.global.ai.client.dto.AiReportGenerateRequest;
+import com.ax.avatarcoach.global.ai.client.dto.AiReportGenerateResponse;
 import com.ax.avatarcoach.global.ai.client.dto.AiTurnRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiTurnResponse;
 import lombok.RequiredArgsConstructor;
@@ -38,5 +40,13 @@ public class AiGatewayClient {
             .body(request)
             .retrieve()
             .body(AiTurnResponse.class);
+    }
+
+    public AiReportGenerateResponse generateReport(AiReportGenerateRequest request) {
+        return aiRestClient.post()
+            .uri("/api/ai/reports")
+            .body(request)
+            .retrieve()
+            .body(AiReportGenerateResponse.class);
     }
 }
