@@ -17,6 +17,7 @@ public enum ErrorCode {
     DOCUMENT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "DOCUMENT_ACCESS_DENIED", "해당 문서에 접근할 수 없습니다."),
     DOCUMENT_ALREADY_UPLOADED(HttpStatus.CONFLICT, "DOCUMENT_ALREADY_UPLOADED", "이미 업로드 완료된 문서입니다."),
     INVALID_UPLOAD_STATUS(HttpStatus.CONFLICT, "INVALID_UPLOAD_STATUS", "업로드 완료 가능한 상태가 아닙니다."),
+    STORAGE_DISABLED(HttpStatus.SERVICE_UNAVAILABLE, "STORAGE_DISABLED", "스토리지 기능이 비활성화되어 있습니다. 설정을 확인해주세요."),
     STORAGE_OBJECT_NOT_FOUND(HttpStatus.BAD_REQUEST, "STORAGE_OBJECT_NOT_FOUND", "스토리지에 업로드된 파일을 찾을 수 없습니다."),
     STORAGE_FILE_SIZE_MISMATCH(HttpStatus.BAD_REQUEST, "STORAGE_FILE_SIZE_MISMATCH", "업로드 파일 크기가 요청 정보와 일치하지 않습니다."),
     STORAGE_CONTENT_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "STORAGE_CONTENT_TYPE_MISMATCH", "업로드 파일 타입이 요청 정보와 일치하지 않습니다."),

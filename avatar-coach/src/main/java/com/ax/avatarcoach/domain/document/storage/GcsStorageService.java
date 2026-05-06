@@ -5,6 +5,7 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.net.URL;
@@ -14,6 +15,7 @@ import java.time.ZoneOffset;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "gcp.storage", name = "enabled", havingValue = "true")
 public class GcsStorageService implements StorageService {
 
     private final Storage storage;

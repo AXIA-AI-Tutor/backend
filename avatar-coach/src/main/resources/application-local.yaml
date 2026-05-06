@@ -35,6 +35,7 @@ ai:
 
 gcp:
   storage:
+    enabled: ${GCS_STORAGE_ENABLED:false}
     bucket-name: ${GCS_BUCKET_NAME:avatar-coach-local}
     document-prefix: ${GCS_DOCUMENT_PREFIX:documents}
     signed-url-expiration-minutes: ${GCS_SIGNED_URL_EXPIRATION_MINUTES:10}
