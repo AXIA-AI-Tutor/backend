@@ -41,7 +41,8 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(
                     "/api/users/me",
-                    "/api/sessions/**"
+                    "/api/sessions/**",
+                    "/api/feedbacks/**"
                 ).authenticated()
                 .anyRequest().permitAll()
             )
