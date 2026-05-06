@@ -26,6 +26,6 @@ public class FeedbackController {
         @Valid @RequestBody FeedbackCreateRequest request,
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
-        return ApiResponse.success(feedbackService.createFeedback(request, oAuth2User));
+        return ApiResponse.success(feedbackService.createFeedbackForUser(request, oAuth2User));
     }
 }

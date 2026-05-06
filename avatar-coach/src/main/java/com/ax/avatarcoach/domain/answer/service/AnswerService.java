@@ -2,6 +2,7 @@ package com.ax.avatarcoach.domain.answer.service;
 
 import com.ax.avatarcoach.domain.answer.dto.AnswerCreateRequest;
 import com.ax.avatarcoach.domain.answer.dto.AnswerResponse;
+import com.ax.avatarcoach.domain.answer.dto.InternalAnswerCreateRequest;
 import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
 import com.ax.avatarcoach.domain.feedback.dto.FeedbackResponse;
@@ -63,8 +64,8 @@ public class AnswerService {
     }
 
     @Transactional
-    public AnswerResponse createAnswer(AnswerCreateRequest request, OAuth2User oAuth2User) {
-        validateDateRange(request);
+    public AnswerResponse createAnswerForUser(AnswerCreateRequest request, OAuth2User oAuth2User) {
+        validateDateRange(request.startedAt(), request.endedAt());
 
         User user = getCurrentUser(oAuth2User);
 
@@ -74,6 +75,20 @@ public class AnswerService {
         if (!session.getUser().getId().equals(user.getId())) {
             throw new CustomException(ErrorCode.SESSION_ACCESS_DENIED);
         }
+
+        return createAnswerInternal(session.getId(), new InternalAnswerCreateRequest(
+            request.questionText(), request.transcript(), request.durationSec(), request.speechRate(),
+            request.silenceCount(), request.fillerWordCount(), request.eyeContactScore(), request.postureScore(),
+            request.sttStatus(), request.startedAt(), request.endedAt()
+        ));
+    }
+
+    @Transactional
+    public AnswerResponse createAnswerInternal(Long sessionId, InternalAnswerCreateRequest request) {
+        validateDateRange(request.startedAt(), request.endedAt());
+
+        Session session = sessionRepository.findById(sessionId)
+            .orElseThrow(() -> new CustomException(ErrorCode.SESSION_NOT_FOUND));
 
         Answer answer = Answer.create(
             session,
@@ -93,9 +108,8 @@ public class AnswerService {
         return AnswerResponse.from(answerRepository.save(answer));
     }
 
-    private void validateDateRange(AnswerCreateRequest request) {
-        if (request.startedAt() != null && request.endedAt() != null
-            && request.endedAt().isBefore(request.startedAt())) {
+    private void validateDateRange(java.time.LocalDateTime startedAt, java.time.LocalDateTime endedAt) {
+        if (startedAt != null && endedAt != null && endedAt.isBefore(startedAt)) {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
     }
