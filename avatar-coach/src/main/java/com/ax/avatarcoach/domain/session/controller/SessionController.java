@@ -59,7 +59,8 @@ public class SessionController {
         summary = "세션 시작",
         description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다. \n" +
             "READY_FOR_AI 상태의 업로드 완료 문서가 1개 이상 필요합니다. \n" +
-            "세션 시작 성공 시 AI 서버에서 첫 번째 질문을 생성하여 함께 반환합니다. \n" +
+            "MVP-2 멀티턴 흐름에서 1번 질문은 이 API 응답으로 반환합니다. \n" +
+            "2~4번 질문은 답변 제출 후 POST /api/sessions/{sessionId}/questions/next API로 생성합니다. \n" +
             "AI 서버 연결 실패 시 AI_SERVER_UNAVAILABLE, AI 서버 응답 오류 시 AI_SERVER_ERROR를 반환합니다."
     )
     @PatchMapping("/{sessionId}/start")
@@ -97,7 +98,12 @@ public class SessionController {
 
     @Operation(
         summary = "다음 질문 생성",
-        description = "IN_PROGRESS 상태의 세션에서 현재 답변 개수를 기준으로 다음 질문 번호를 계산하고 AI 서버에 다음 질문 생성을 요청합니다."
+        description = "MVP-2 멀티턴 흐름에서 2~4번 질문을 생성합니다. \n" +
+            "1번 질문은 세션 시작 API에서 반환되므로 이 API로 생성하지 않습니다. \n" +
+            "Backend가 현재 저장된 답변 개수를 기준으로 다음 questionIndex를 계산합니다. \n" +
+            "questionIndex 2와 4는 이전 답변 기반 FOLLOW_UP 질문이고, questionIndex 3은 새로운 BASIC 질문입니다. \n" +
+            "답변이 4개 이상 저장된 세션은 다음 질문을 생성할 수 없습니다. \n" +
+            "AI 서버 연결 실패 시 AI_SERVER_UNAVAILABLE, AI 서버 응답 오류 시 AI_SERVER_ERROR를 반환합니다."
     )
     @PostMapping("/{sessionId}/questions/next")
     public ApiResponse<SessionNextQuestionResponse> generateNextQuestion(
