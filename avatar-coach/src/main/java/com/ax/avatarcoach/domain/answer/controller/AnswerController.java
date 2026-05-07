@@ -64,7 +64,8 @@ public class AnswerController {
 
     @Operation(
         summary = "답변 제출 및 AI 피드백 생성",
-        description = "현재 로그인한 사용자가 특정 세션에 답변을 제출하면 Answer를 저장하고, AI 서버 평가 결과로 Feedback을 생성합니다."
+        description = "현재 로그인한 사용자가 특정 세션에 답변을 제출하면 Answer를 저장하고, AI 서버 평가 결과로 Feedback을 생성합니다. \n" +
+            "음성 파일은 multipart/form-data의 file 필드로 전달하며, AI 서버 연결 실패 시 AI_SERVER_UNAVAILABLE, AI 서버 응답 오류 시 AI_SERVER_ERROR를 반환합니다."
     )
     @PostMapping(
         value = "/sessions/{sessionId}/answers/with-feedback",
