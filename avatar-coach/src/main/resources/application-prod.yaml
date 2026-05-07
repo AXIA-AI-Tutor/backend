@@ -34,3 +34,10 @@ app:
 ai:
   server:
     base-url: ${AI_SERVER_BASE_URL}
+
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: ${SESSION_COOKIE_SAME_SITE:none}
+        secure: ${SESSION_COOKIE_SECURE:true}
