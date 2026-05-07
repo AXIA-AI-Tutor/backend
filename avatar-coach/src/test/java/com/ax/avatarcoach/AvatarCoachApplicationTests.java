@@ -1,0 +1,13 @@
+package com.ax.avatarcoach;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class AvatarCoachApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
+
+}

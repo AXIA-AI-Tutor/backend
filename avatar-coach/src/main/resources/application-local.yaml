@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/avatar_coach}
+    username: ${DB_USERNAME:avatar}
+    password: ${DB_PASSWORD:your-local-password}
+    driver-class-name: org.postgresql.Driver
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:local-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:local-google-client-secret}
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - email
+              - profile
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+app:
+  oauth2:
+    success-redirect-url: ${OAUTH2_SUCCESS_REDIRECT_URL:http://localhost:3000}
+  internal:
+    api-key: ${INTERNAL_API_KEY:local-internal-api-key}
+
+ai:
+  server:
+    base-url: ${AI_SERVER_BASE_URL:http://localhost:8000}
+
+gcp:
+  storage:
+    enabled: ${GCS_STORAGE_ENABLED:false}
+    bucket-name: ${GCS_BUCKET_NAME:avatar-coach-local}
+    document-prefix: ${GCS_DOCUMENT_PREFIX:documents}
+    signed-url-expiration-minutes: ${GCS_SIGNED_URL_EXPIRATION_MINUTES:10}

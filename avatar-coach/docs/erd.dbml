@@ -1,0 +1,123 @@
+Table users {
+  id bigint [pk, increment]
+  email varchar(255)
+  nickname varchar(50)
+  profile_image_url varchar(500)
+  provider varchar(20)
+  provider_user_id varchar(100)
+  role varchar(20)
+  created_at timestamp
+
+  Indexes {
+    (provider, provider_user_id) [unique]
+  }
+}
+
+Table sessions {
+  id bigint [pk, increment]
+  user_id bigint
+  mode varchar(30)
+  target varchar(30)
+  difficulty varchar(30)
+  answer_time_limit_sec int
+  status varchar(30)
+  started_at timestamp
+  completed_at timestamp
+  created_at timestamp
+}
+
+Ref: sessions.user_id > users.id
+
+Table documents {
+  id bigint [pk, increment]
+  session_id bigint
+
+  doc_type varchar(30)
+  original_file_name varchar(255)
+  file_type varchar(50)
+  file_size bigint
+
+  // GCS 파일 저장 정보
+  storage_provider varchar(20) // GCS
+  storage_bucket varchar(100)
+  storage_path varchar(500) // users/{userId}/sessions/{sessionId}/documents/{uuid}
+
+  // Signed URL 업로드 상태 관리
+  upload_status varchar(30) // PENDING, UPLOADED, FAILED
+  upload_url_expires_at timestamp
+  uploaded_at timestamp
+
+  summary text
+  status varchar(30)
+  created_at timestamp
+}
+
+Ref: documents.session_id > sessions.id
+
+Table answers {
+  id bigint [pk, increment]
+  session_id bigint [not null]
+
+  question_text text
+  transcript text
+
+  duration_sec int
+  speech_rate decimal
+  silence_count int
+  filler_word_count int
+  eye_contact_score int
+  posture_score int
+
+  stt_status varchar(30)
+  started_at timestamp
+  ended_at timestamp
+  created_at timestamp
+}
+
+Ref: answers.session_id > sessions.id
+
+Table feedbacks {
+  id bigint [pk, increment]
+  answer_id bigint [not null]
+
+  summary text
+  evidence text
+  improvement_example text
+
+  structure_score int
+  specificity_score int
+  relevance_score int
+  delivery_score int
+
+  created_at timestamp
+}
+
+Ref: feedbacks.answer_id > answers.id
+
+Table reports {
+  id bigint [pk, increment]
+  session_id bigint [not null, unique]
+
+  total_score int
+  strengths text
+  improvements text
+  improvement_answer_example text
+  next_goals text
+
+  created_at timestamp
+}
+
+Ref: reports.session_id > sessions.id
+
+Table session_events {
+  id bigint [pk, increment]
+  session_id bigint [not null]
+
+  event_type varchar(100)
+  event_order int
+  payload_json text
+
+  created_at timestamp
+}
+
+Ref: session_events.session_id > sessions.id
