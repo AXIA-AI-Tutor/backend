@@ -8,10 +8,6 @@ spring:
   jpa:
     open-in-view: false
 
-app:
-  cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,https://dev.ai-coach.kro.kr,https://ai-coach.kro.kr}
-
 gcp:
   storage:
     enabled: ${GCS_STORAGE_ENABLED:false}
@@ -19,10 +15,6 @@ gcp:
     document-prefix: ${GCS_DOCUMENT_PREFIX:documents}
     signed-url-expiration-minutes: ${GCS_SIGNED_URL_EXPIRATION_MINUTES:10}
 
+
 server:
   port: ${PORT:8080}
-  servlet:
-    session:
-      cookie:
-        same-site: none
-        secure: true
