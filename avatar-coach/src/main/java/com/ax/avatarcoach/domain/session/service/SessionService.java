@@ -1,13 +1,12 @@
 package com.ax.avatarcoach.domain.session.service;
 
+import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
 import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
 import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
-import com.ax.avatarcoach.domain.session.dto.SessionEventResponse;
-import com.ax.avatarcoach.domain.session.dto.SessionResponse;
-import com.ax.avatarcoach.domain.session.dto.SessionStartRequest;
-import com.ax.avatarcoach.domain.session.dto.SessionStartResponse;
+import com.ax.avatarcoach.domain.session.dto.*;
 import com.ax.avatarcoach.domain.session.entity.Session;
 import com.ax.avatarcoach.domain.session.entity.SessionEventType;
+import com.ax.avatarcoach.domain.session.entity.SessionStatus;
 import com.ax.avatarcoach.domain.session.repository.SessionRepository;
 import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
 import com.ax.avatarcoach.domain.user.entity.User;
@@ -35,6 +34,9 @@ public class SessionService {
     private final SessionEventService sessionEventService;
     private final DocumentRepository documentRepository;
     private final AiGatewayClient aiGatewayClient;
+    private final AnswerRepository answerRepository;
+
+    private static final int MAX_QUESTION_COUNT = 4;
 
     @Transactional
     public SessionResponse createSession(OAuth2User oAuth2User) {
@@ -119,6 +121,50 @@ public class SessionService {
 
         return SessionStartResponse.of(
             SessionResponse.from(session),
+            aiQuestion
+        );
+    }
+
+    @Transactional
+    public SessionNextQuestionResponse generateNextQuestion(
+        Long sessionId,
+        OAuth2User oAuth2User
+    ) {
+        User user = getCurrentUser(oAuth2User);
+
+        Session session = sessionRepository.findByIdAndUser(sessionId, user)
+            .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
+
+        if (session.getStatus() != SessionStatus.IN_PROGRESS) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        long answerCount = answerRepository.countBySessionId(sessionId);
+        int nextQuestionIndex = Math.toIntExact(answerCount) + 1;
+
+        // 1번 질문은 start가 담당하니까, questions/next API가 1번 질문을 생성하면 안됨
+        if (nextQuestionIndex < 2 || nextQuestionIndex > MAX_QUESTION_COUNT) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
+        AiQuestionGenerateRequest aiRequest = new AiQuestionGenerateRequest(
+            user.getId(),
+            session.getId(),
+            session.getMode().name(),
+            session.getTarget().name(),
+            session.getDifficulty().name(),
+            session.getAnswerTimeLimitSec(),
+            nextQuestionIndex,
+            List.of(),
+            List.of()
+        );
+
+        AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
+
+        return SessionNextQuestionResponse.of(
+            session.getId(),
+            nextQuestionIndex,
+            MAX_QUESTION_COUNT,
             aiQuestion
         );
     }
