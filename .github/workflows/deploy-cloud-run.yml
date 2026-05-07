@@ -1,0 +1,81 @@
+name: Deploy Backend to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'avatar-coach/**'
+      - '.github/workflows/deploy-cloud-run.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: avatar-coach-202605
+  REGION: asia-northeast3
+  REPOSITORY: avatar-coach
+  SERVICE_NAME: avatar-coach
+  IMAGE_NAME: avatar-coach
+
+jobs:
+  deploy:
+    name: Build and deploy backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Validate Gradle build without tests
+        working-directory: avatar-coach
+        run: ./gradlew clean build -x test --no-daemon
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build and push Docker image
+        id: build
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:${GITHUB_SHA}"
+          LATEST_URI="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${IMAGE_NAME}:main"
+
+          docker build -t "${IMAGE_URI}" -t "${LATEST_URI}" ./avatar-coach
+          docker push "${IMAGE_URI}"
+          docker push "${LATEST_URI}"
+
+          echo "image_uri=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${SERVICE_NAME}" \
+            --image "${{ steps.build.outputs.image_uri }}" \
+            --region "${REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --port 8080 \
+            --memory 1Gi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 1 \
+            --timeout 300 \
+            --concurrency 80 \
+            --update-env-vars SERVER_FORWARD_HEADERS_STRATEGY=framework \
+            --quiet
