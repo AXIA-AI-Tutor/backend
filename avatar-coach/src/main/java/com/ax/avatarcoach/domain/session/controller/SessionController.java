@@ -1,9 +1,6 @@
 package com.ax.avatarcoach.domain.session.controller;
 
-import com.ax.avatarcoach.domain.session.dto.SessionEventResponse;
-import com.ax.avatarcoach.domain.session.dto.SessionResponse;
-import com.ax.avatarcoach.domain.session.dto.SessionStartRequest;
-import com.ax.avatarcoach.domain.session.dto.SessionStartResponse;
+import com.ax.avatarcoach.domain.session.dto.*;
 import com.ax.avatarcoach.domain.session.service.SessionService;
 import com.ax.avatarcoach.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -96,5 +93,17 @@ public class SessionController {
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
         return ApiResponse.success(sessionService.getSessionEvents(sessionId, oAuth2User));
+    }
+
+    @Operation(
+        summary = "다음 질문 생성",
+        description = "IN_PROGRESS 상태의 세션에서 현재 답변 개수를 기준으로 다음 질문 번호를 계산하고 AI 서버에 다음 질문 생성을 요청합니다."
+    )
+    @PostMapping("/{sessionId}/questions/next")
+    public ApiResponse<SessionNextQuestionResponse> generateNextQuestion(
+        @PathVariable Long sessionId,
+        @AuthenticationPrincipal OAuth2User oAuth2User
+    ) {
+        return ApiResponse.success(sessionService.generateNextQuestion(sessionId, oAuth2User));
     }
 }
