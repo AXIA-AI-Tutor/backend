@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public record AiTurnResponse(
+    String transcript,
+
     String summary,
 
     String evidence,
