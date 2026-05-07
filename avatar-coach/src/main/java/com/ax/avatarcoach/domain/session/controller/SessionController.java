@@ -60,7 +60,10 @@ public class SessionController {
 
     @Operation(
         summary = "세션 시작",
-        description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다. READY_FOR_AI 상태의 업로드 완료 문서가 1개 이상 필요합니다. 세션 시작 성공 시 AI 서버에서 첫 번째 질문을 생성하여 함께 반환합니다."
+        description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다. \n" +
+            "READY_FOR_AI 상태의 업로드 완료 문서가 1개 이상 필요합니다. \n" +
+            "세션 시작 성공 시 AI 서버에서 첫 번째 질문을 생성하여 함께 반환합니다. \n" +
+            "AI 서버 연결 실패 시 AI_SERVER_UNAVAILABLE, AI 서버 응답 오류 시 AI_SERVER_ERROR를 반환합니다."
     )
     @PatchMapping("/{sessionId}/start")
     public ApiResponse<SessionStartResponse> startSession(

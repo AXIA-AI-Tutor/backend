@@ -32,7 +32,8 @@ public class ReportController {
 
     @Operation(
         summary = "AI 리포트 생성",
-        description = "완료된 세션의 답변과 피드백을 기반으로 AI 서버에 리포트 생성을 요청하고, 생성된 리포트를 저장합니다."
+        description = "완료된 세션의 답변과 피드백을 기반으로 AI 서버에 리포트 생성을 요청하고, 생성된 리포트를 저장합니다. \n" +
+            "AI 서버 연결 실패 시 AI_SERVER_UNAVAILABLE, AI 서버 응답 오류 시 AI_SERVER_ERROR를 반환합니다."
     )
     @PostMapping("/generate")
     public ApiResponse<ReportResponse> generateSessionReport(
