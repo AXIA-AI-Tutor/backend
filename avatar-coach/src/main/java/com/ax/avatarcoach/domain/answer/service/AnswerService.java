@@ -2,6 +2,7 @@ package com.ax.avatarcoach.domain.answer.service;
 
 import com.ax.avatarcoach.domain.answer.dto.*;
 import com.ax.avatarcoach.domain.answer.entity.Answer;
+import com.ax.avatarcoach.domain.answer.entity.SttStatus;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
 import com.ax.avatarcoach.domain.feedback.dto.FeedbackResponse;
 import com.ax.avatarcoach.domain.feedback.dto.InternalFeedbackCreateRequest;
@@ -23,10 +24,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -108,44 +108,42 @@ public class AnswerService {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
-        AnswerResponse answer = createAnswerInternal(session.getId(), new InternalAnswerCreateRequest(
+        Answer answer = createAnswerEntityInternal(session.getId(), new InternalAnswerCreateRequest(
             request.questionText(),
-            request.transcript(),
-            request.durationSec(),
-            request.speechRate(),
-            request.silenceCount(),
-            request.fillerWordCount(),
+            null,
+            null,
+            null,
+            null,
+            null,
             request.eyeContactScore(),
             request.postureScore(),
-            request.sttStatus(),
+            SttStatus.PENDING,
             request.startedAt(),
             request.endedAt()
         ));
 
-        Map<String, Object> audioMetrics = new HashMap<>();
-        audioMetrics.put("speech_rate", request.speechRate());
-        audioMetrics.put("silence_count", request.silenceCount());
-        audioMetrics.put("filler_word_count", request.fillerWordCount());
-
-        Map<String, Object> visionMetrics = new HashMap<>();
-        visionMetrics.put("eye_contact_score", request.eyeContactScore());
-        visionMetrics.put("posture_score", request.postureScore());
+        String visionMetricsJson = """
+            {"eye_contact_score":%d,"posture_score":%d}
+            """.formatted(
+            request.eyeContactScore(),
+            request.postureScore()
+        );
 
         AiTurnRequest aiRequest = new AiTurnRequest(
             user.getId(),
             session.getId(),
-            answer.answerId(),
+            answer.getId(),
             session.getMode().name(),
-            answer.questionText(),
-            answer.transcript(),
-            audioMetrics,
-            visionMetrics
+            answer.getQuestionText(),
+            visionMetricsJson
         );
 
-        AiTurnResponse aiFeedback = aiGatewayClient.evaluateTurn(aiRequest);
+        AiTurnResponse aiFeedback = aiGatewayClient.evaluateTurn(aiRequest, request.file());
+
+        answer.completeStt(aiFeedback.transcript());
 
         FeedbackResponse feedback = feedbackService.createFeedbackInternal(
-            answer.answerId(),
+            answer.getId(),
             new InternalFeedbackCreateRequest(
                 aiFeedback.summary(),
                 aiFeedback.evidence(),
@@ -157,32 +155,12 @@ public class AnswerService {
             )
         );
 
-        return AnswerWithFeedbackResponse.of(answer, feedback);
+        return AnswerWithFeedbackResponse.of(AnswerResponse.from(answer), feedback);
     }
 
     @Transactional
     public AnswerResponse createAnswerInternal(Long sessionId, InternalAnswerCreateRequest request) {
-        validateDateRange(request.startedAt(), request.endedAt());
-
-        Session session = sessionRepository.findById(sessionId)
-            .orElseThrow(() -> new CustomException(ErrorCode.SESSION_NOT_FOUND));
-
-        Answer answer = Answer.create(
-            session,
-            request.questionText(),
-            request.transcript(),
-            request.durationSec(),
-            request.speechRate(),
-            request.silenceCount(),
-            request.fillerWordCount(),
-            request.eyeContactScore(),
-            request.postureScore(),
-            request.sttStatus(),
-            request.startedAt(),
-            request.endedAt()
-        );
-
-        return AnswerResponse.from(answerRepository.save(answer));
+        return AnswerResponse.from(createAnswerEntityInternal(sessionId, request));
     }
 
     private void validateDateRange(java.time.LocalDateTime startedAt, java.time.LocalDateTime endedAt) {
@@ -204,5 +182,29 @@ public class AnswerService {
 
         return userRepository.findByProviderAndProviderUserId(OAuthProvider.GOOGLE, providerUserId)
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private Answer createAnswerEntityInternal(Long sessionId, InternalAnswerCreateRequest request) {
+        validateDateRange(request.startedAt(), request.endedAt());
+
+        Session session = sessionRepository.findById(sessionId)
+            .orElseThrow(() -> new CustomException(ErrorCode.SESSION_NOT_FOUND));
+
+        Answer answer = Answer.create(
+            session,
+            request.questionText(),
+            request.transcript(),
+            request.durationSec(),
+            request.speechRate(),
+            request.silenceCount(),
+            request.fillerWordCount(),
+            request.eyeContactScore(),
+            request.postureScore(),
+            request.sttStatus(),
+            request.startedAt(),
+            request.endedAt()
+        );
+
+        return answerRepository.save(answer);
     }
 }

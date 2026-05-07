@@ -84,4 +84,12 @@ public class Answer extends BaseTimeEntity {
         answer.endedAt = endedAt;
         return answer;
     }
+
+    /**
+     * Answer가 AI 응답 후 transcript를 채울 수 있는 메서드
+     */
+    public void completeStt(String transcript) {
+        this.transcript = transcript;
+        this.sttStatus = SttStatus.COMPLETED;
+    }
 }
