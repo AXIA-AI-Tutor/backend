@@ -1,8 +1,11 @@
 package com.ax.avatarcoach.domain.session.service;
 
+import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
 import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
 import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
+import com.ax.avatarcoach.domain.feedback.entity.Feedback;
+import com.ax.avatarcoach.domain.feedback.repository.FeedbackRepository;
 import com.ax.avatarcoach.domain.session.dto.*;
 import com.ax.avatarcoach.domain.session.entity.Session;
 import com.ax.avatarcoach.domain.session.entity.SessionEventType;
@@ -22,6 +25,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -35,6 +39,7 @@ public class SessionService {
     private final DocumentRepository documentRepository;
     private final AiGatewayClient aiGatewayClient;
     private final AnswerRepository answerRepository;
+    private final FeedbackRepository feedbackRepository;
 
     private static final int MAX_QUESTION_COUNT = 4;
 
@@ -139,8 +144,32 @@ public class SessionService {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
-        long answerCount = answerRepository.countBySessionId(sessionId);
-        int nextQuestionIndex = Math.toIntExact(answerCount) + 1;
+        List<Answer> answers = answerRepository.findAllBySessionIdOrderByCreatedAtAsc(sessionId);
+        int nextQuestionIndex = answers.size() + 1;
+
+        List<String> previousQuestions = answers.stream()
+            .map(Answer::getQuestionText)
+            .filter(questionText -> questionText != null && !questionText.isBlank())
+            .toList();
+
+        List<AiQuestionGenerateRequest.PreviousTurn> previousTurns = new ArrayList<>();
+
+        for (int i = 0; i < answers.size(); i++) {
+            Answer answer = answers.get(i);
+            Feedback feedback = feedbackRepository.findAllByAnswerIdOrderByCreatedAtAsc(answer.getId())
+                .stream()
+                .findFirst() // 사용 이유 : 현재 구조상 답변 하나에 피드백이 보통 1개지만 repository는 list를 반환
+                .orElse(null);
+
+            previousTurns.add(new AiQuestionGenerateRequest.PreviousTurn(
+                answer.getId(),
+                i + 1,
+                answer.getQuestionText(),
+                answer.getTranscript(),
+                feedback != null ? feedback.getSummary() : null,
+                feedback != null ? feedback.getImprovementExample() : null
+            ));
+        }
 
         // 1번 질문은 start가 담당하니까, questions/next API가 1번 질문을 생성하면 안됨
         if (nextQuestionIndex < 2 || nextQuestionIndex > MAX_QUESTION_COUNT) {
@@ -155,8 +184,8 @@ public class SessionService {
             session.getDifficulty().name(),
             session.getAnswerTimeLimitSec(),
             nextQuestionIndex,
-            List.of(),
-            List.of()
+            previousQuestions,
+            previousTurns
         );
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);

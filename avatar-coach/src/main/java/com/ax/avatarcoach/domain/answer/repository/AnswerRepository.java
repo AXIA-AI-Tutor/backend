@@ -10,6 +10,4 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
     List<Answer> findAllBySessionIdOrderByCreatedAtAsc(Long sessionId);
 
     Optional<Answer> findByIdAndSessionUserId(Long id, Long userId);
-
-    long countBySessionId(Long sessionId);
 }

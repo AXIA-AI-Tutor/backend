@@ -32,10 +32,19 @@ public record AiQuestionGenerateRequest(
         @JsonProperty("answer_id")
         Long answerId,
 
+        @JsonProperty("question_index")
+        Integer questionIndex,
+
         @JsonProperty("question_text")
         String questionText,
 
-        String transcript
+        String transcript,
+
+        @JsonProperty("feedback_summary")
+        String feedbackSummary,
+
+        @JsonProperty("improvement_example")
+        String improvementExample
     ) {
     }
 }
