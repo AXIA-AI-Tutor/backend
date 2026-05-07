@@ -1,5 +1,6 @@
 package com.ax.avatarcoach.domain.session.service;
 
+import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
 import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
 import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
@@ -139,8 +140,21 @@ public class SessionService {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
-        long answerCount = answerRepository.countBySessionId(sessionId);
-        int nextQuestionIndex = Math.toIntExact(answerCount) + 1;
+        List<Answer> answers = answerRepository.findAllBySessionIdOrderByCreatedAtAsc(sessionId);
+        int nextQuestionIndex = answers.size() + 1;
+
+        List<String> previousQuestions = answers.stream()
+            .map(Answer::getQuestionText)
+            .filter(questionText -> questionText != null && !questionText.isBlank())
+            .toList();
+
+        List<AiQuestionGenerateRequest.PreviousTurn> previousTurns = answers.stream()
+            .map(answer -> new AiQuestionGenerateRequest.PreviousTurn(
+                answer.getId(),
+                answer.getQuestionText(),
+                answer.getTranscript()
+            ))
+            .toList();
 
         // 1번 질문은 start가 담당하니까, questions/next API가 1번 질문을 생성하면 안됨
         if (nextQuestionIndex < 2 || nextQuestionIndex > MAX_QUESTION_COUNT) {
@@ -155,8 +169,8 @@ public class SessionService {
             session.getDifficulty().name(),
             session.getAnswerTimeLimitSec(),
             nextQuestionIndex,
-            List.of(),
-            List.of()
+            previousQuestions,
+            previousTurns
         );
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
