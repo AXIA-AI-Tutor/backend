@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
@@ -63,14 +64,20 @@ public class AnswerController {
 
     @Operation(
         summary = "답변 제출 및 AI 피드백 생성",
-        description = "현재 로그인한 사용자가 특정 세션에 답변을 제출하면 Answer를 저장하고, AI 서버 평가 결과로 Feedback을 생성합니다."
+        description = "현재 로그인한 사용자가 특정 세션에 답변을 제출하면 Answer를 저장하고, AI 서버 평가 결과로 Feedback을 생성합니다. \n" +
+            "음성 파일은 multipart/form-data의 file 필드로 전달하며, AI 서버 연결 실패 시 AI_SERVER_UNAVAILABLE, AI 서버 응답 오류 시 AI_SERVER_ERROR를 반환합니다."
     )
-    @PostMapping("/sessions/{sessionId}/answers/with-feedback")
+    @PostMapping(
+        value = "/sessions/{sessionId}/answers/with-feedback",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ApiResponse<AnswerWithFeedbackResponse> submitAnswerWithFeedback(
         @PathVariable Long sessionId,
-        @Valid @RequestBody AnswerSubmitRequest request,
+        @Valid @ModelAttribute AnswerSubmitRequest request,
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
-        return ApiResponse.success(answerService.submitAnswerWithFeedback(sessionId, request, oAuth2User));
+        return ApiResponse.success(
+            answerService.submitAnswerWithFeedback(sessionId, request, oAuth2User)
+        );
     }
 }
