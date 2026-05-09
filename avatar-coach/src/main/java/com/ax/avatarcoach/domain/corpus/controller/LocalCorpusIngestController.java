@@ -1,6 +1,6 @@
 package com.ax.avatarcoach.domain.corpus.controller;
 
-import com.ax.avatarcoach.domain.corpus.entity.CorpusIngestResult;
+import com.ax.avatarcoach.domain.corpus.dto.CorpusIngestResult;
 import com.ax.avatarcoach.domain.corpus.service.GlobalCorpusIngestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
