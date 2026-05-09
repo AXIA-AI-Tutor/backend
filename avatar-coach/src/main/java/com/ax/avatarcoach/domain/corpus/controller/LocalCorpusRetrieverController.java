@@ -1,7 +1,7 @@
 package com.ax.avatarcoach.domain.corpus.controller;
 
-import com.ax.avatarcoach.domain.corpus.entity.CorpusSearchCondition;
-import com.ax.avatarcoach.domain.corpus.entity.CorpusSearchResult;
+import com.ax.avatarcoach.domain.corpus.dto.CorpusSearchCondition;
+import com.ax.avatarcoach.domain.corpus.dto.CorpusSearchResult;
 import com.ax.avatarcoach.domain.corpus.service.GlobalCorpusRetrieverService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;

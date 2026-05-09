@@ -42,3 +42,15 @@ gcp:
     bucket-name: ${GCS_BUCKET_NAME:avatar-coach-local}
     document-prefix: ${GCS_DOCUMENT_PREFIX:documents}
     signed-url-expiration-minutes: ${GCS_SIGNED_URL_EXPIRATION_MINUTES:10}
+
+
+rag:
+  embedding:
+    provider: ${RAG_EMBEDDING_PROVIDER:fake}
+    base-url: ${RAG_EMBEDDING_BASE_URL:http://localhost:11434}
+    model: ${RAG_EMBEDDING_MODEL:bge-m3:latest}
+    dimensions: ${RAG_EMBEDDING_DIMENSIONS:1024}
+    normalize: ${RAG_EMBEDDING_NORMALIZE:true}
+    query-timeout-ms: ${RAG_EMBEDDING_QUERY_TIMEOUT_MS:5000}
+    ingest-timeout-ms: ${RAG_EMBEDDING_INGEST_TIMEOUT_MS:60000}
+    max-retries: ${RAG_EMBEDDING_MAX_RETRIES:2}

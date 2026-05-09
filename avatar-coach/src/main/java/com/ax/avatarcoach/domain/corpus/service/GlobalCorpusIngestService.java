@@ -1,6 +1,11 @@
 package com.ax.avatarcoach.domain.corpus.service;
 
-import com.ax.avatarcoach.domain.corpus.entity.*;
+import com.ax.avatarcoach.domain.corpus.dto.CorpusIngestResult;
+import com.ax.avatarcoach.domain.corpus.dto.CorpusRecordLine;
+import com.ax.avatarcoach.domain.corpus.dto.CorpusSourceChunkLine;
+import com.ax.avatarcoach.domain.corpus.entity.GlobalCorpusRecord;
+import com.ax.avatarcoach.domain.corpus.entity.GlobalCorpusSource;
+import com.ax.avatarcoach.domain.corpus.entity.GlobalCorpusSourceChunk;
 import com.ax.avatarcoach.domain.corpus.repository.GlobalCorpusRecordRepository;
 import com.ax.avatarcoach.domain.corpus.repository.GlobalCorpusSourceChunkRepository;
 import com.ax.avatarcoach.domain.corpus.repository.GlobalCorpusSourceRepository;

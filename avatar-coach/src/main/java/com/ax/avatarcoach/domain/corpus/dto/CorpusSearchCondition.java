@@ -1,4 +1,4 @@
-package com.ax.avatarcoach.domain.corpus.entity;
+package com.ax.avatarcoach.domain.corpus.dto;
 
 import java.util.List;
 

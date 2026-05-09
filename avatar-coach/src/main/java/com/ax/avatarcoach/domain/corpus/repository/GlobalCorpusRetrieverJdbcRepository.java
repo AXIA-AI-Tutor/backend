@@ -1,7 +1,7 @@
 package com.ax.avatarcoach.domain.corpus.repository;
 
-import com.ax.avatarcoach.domain.corpus.entity.CorpusSearchCondition;
-import com.ax.avatarcoach.domain.corpus.entity.CorpusSearchResult;
+import com.ax.avatarcoach.domain.corpus.dto.CorpusSearchCondition;
+import com.ax.avatarcoach.domain.corpus.dto.CorpusSearchResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
