@@ -7,8 +7,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 /**
- * AI 서버 호출에 사용할 RestClient를 Spring Bean으로 등록하는 설정 클래스
- * AiGatewayProperties의 baseUrl을 기본 주소로 사용
+ * Registers the RestClient used for AI gateway calls.
  */
 @Configuration
 @EnableConfigurationProperties(AiGatewayProperties.class)
@@ -16,9 +15,14 @@ public class AiGatewayConfig {
 
     @Bean
     public RestClient aiRestClient(AiGatewayProperties properties) {
-        return RestClient.builder()
+        RestClient.Builder builder = RestClient.builder()
             .baseUrl(properties.baseUrl())
-            .requestFactory(new SimpleClientHttpRequestFactory()) // 단순한 HTTP/1.1 요청으로 보내게 됨
-            .build();
+            .requestFactory(new SimpleClientHttpRequestFactory());
+
+        if (properties.token() != null && !properties.token().isBlank()) {
+            builder.defaultHeader("X-Internal-Token", properties.token());
+        }
+
+        return builder.build();
     }
 }
