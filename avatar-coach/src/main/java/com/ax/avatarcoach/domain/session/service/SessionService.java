@@ -2,6 +2,7 @@ package com.ax.avatarcoach.domain.session.service;
 
 import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
+import com.ax.avatarcoach.domain.corpus.service.CorpusRagContextService;
 import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
 import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
 import com.ax.avatarcoach.domain.feedback.entity.Feedback;
@@ -24,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.ObjectProvider;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +43,7 @@ public class SessionService {
     private final AiGatewayClient aiGatewayClient;
     private final AnswerRepository answerRepository;
     private final FeedbackRepository feedbackRepository;
+    private final ObjectProvider<CorpusRagContextService> corpusRagContextServiceProvider;
 
     private static final int MAX_QUESTION_COUNT = 4;
 
@@ -119,6 +123,7 @@ public class SessionService {
             session.getAnswerTimeLimitSec(),
             1,
             List.of(),
+            List.of(),
             List.of()
         );
 
@@ -176,6 +181,16 @@ public class SessionService {
             throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
+        String ragQuery = buildRagQuery(previousTurns);
+
+        CorpusRagContextService corpusRagContextService =
+            corpusRagContextServiceProvider.getIfAvailable();
+
+        List<AiQuestionGenerateRequest.RagContextItem> ragContext =
+            corpusRagContextService == null
+                ? List.of()
+                : corpusRagContextService.buildQuestionRagContext(session, ragQuery);
+
         AiQuestionGenerateRequest aiRequest = new AiQuestionGenerateRequest(
             user.getId(),
             session.getId(),
@@ -185,7 +200,8 @@ public class SessionService {
             session.getAnswerTimeLimitSec(),
             nextQuestionIndex,
             previousQuestions,
-            previousTurns
+            previousTurns,
+            ragContext
         );
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
@@ -223,6 +239,25 @@ public class SessionService {
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 
         return sessionEventService.getSessionEvents(session);
+    }
+
+    private String buildRagQuery(List<AiQuestionGenerateRequest.PreviousTurn> previousTurns) {
+        if (previousTurns == null || previousTurns.isEmpty()) {
+            return "";
+        }
+
+        AiQuestionGenerateRequest.PreviousTurn lastTurn = previousTurns.get(previousTurns.size() - 1);
+
+        return String.join(" ",
+            nullToEmpty(lastTurn.questionText()),
+            nullToEmpty(lastTurn.transcript()),
+            nullToEmpty(lastTurn.feedbackSummary()),
+            nullToEmpty(lastTurn.improvementExample())
+        ).trim();
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 
     private User getCurrentUser(OAuth2User oAuth2User) {
