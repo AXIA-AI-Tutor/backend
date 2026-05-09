@@ -1,4 +1,4 @@
-package com.ax.avatarcoach.domain.corpus.entity;
+package com.ax.avatarcoach.domain.corpus.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;

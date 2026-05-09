@@ -1,5 +1,6 @@
 package com.ax.avatarcoach.domain.corpus.service;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Component
 @Profile("local")
+@ConditionalOnProperty(prefix = "rag.embedding", name = "provider", havingValue = "fake", matchIfMissing = true)
 public class FakeCorpusEmbeddingClient implements CorpusEmbeddingClient {
 
     private static final int DIMENSION = 1024;
