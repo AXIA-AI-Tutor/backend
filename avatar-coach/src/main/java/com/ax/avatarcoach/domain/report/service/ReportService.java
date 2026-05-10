@@ -73,6 +73,13 @@ public class ReportService {
             throw new CustomException(ErrorCode.REPORT_ANSWER_REQUIRED);
         }
 
+        boolean hasIncompleteTranscript = answers.stream()
+            .anyMatch(answer -> answer.getTranscript() == null || answer.getTranscript().isBlank());
+
+        if (hasIncompleteTranscript) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
+
         List<AiReportGenerateRequest.AnswerItem> answerItems = answers.stream()
             .map(answer -> new AiReportGenerateRequest.AnswerItem(
                 answer.getId(),

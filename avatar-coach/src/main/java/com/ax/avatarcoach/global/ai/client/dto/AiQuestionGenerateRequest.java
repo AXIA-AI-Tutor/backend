@@ -1,5 +1,6 @@
 package com.ax.avatarcoach.global.ai.client.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public record AiQuestionGenerateRequest(
     @JsonProperty("previous_turns")
     List<PreviousTurn> previousTurns,
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("rag_context")
     List<RagContextItem> ragContext
 ) {
