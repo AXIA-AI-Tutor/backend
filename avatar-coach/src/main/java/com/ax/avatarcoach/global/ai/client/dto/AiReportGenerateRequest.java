@@ -32,9 +32,6 @@ public record AiReportGenerateRequest(
         @JsonProperty("duration_sec")
         Integer durationSec,
 
-        @JsonProperty("audio_metrics")
-        Map<String, Object> audioMetrics,
-
         @JsonProperty("vision_metrics")
         Map<String, Object> visionMetrics
     ) {
