@@ -86,7 +86,6 @@ public class ReportService {
                 answer.getQuestionText(),
                 answer.getTranscript(),
                 answer.getDurationSec(),
-                createAudioMetrics(answer),
                 createVisionMetrics(answer)
             ))
             .toList();
@@ -146,14 +145,6 @@ public class ReportService {
                 providerUserId
             )
             .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-    }
-
-    private Map<String, Object> createAudioMetrics(Answer answer) {
-        Map<String, Object> audioMetrics = new HashMap<>();
-        audioMetrics.put("speech_rate", answer.getSpeechRate());
-        audioMetrics.put("silence_count", answer.getSilenceCount());
-        audioMetrics.put("filler_word_count", answer.getFillerWordCount());
-        return audioMetrics;
     }
 
     private Map<String, Object> createVisionMetrics(Answer answer) {
