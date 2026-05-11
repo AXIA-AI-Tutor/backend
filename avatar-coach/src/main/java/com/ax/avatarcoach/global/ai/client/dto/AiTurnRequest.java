@@ -20,6 +20,8 @@ public record AiTurnRequest(
     @JsonProperty("question_text")
     String questionText,
 
+    String transcript,
+
     @JsonProperty("vision_metrics")
     String visionMetrics,
 

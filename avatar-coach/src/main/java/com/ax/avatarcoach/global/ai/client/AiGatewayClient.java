@@ -51,7 +51,7 @@ public class AiGatewayClient {
         }
     }
 
-    public AiTurnResponse evaluateTurn(AiTurnRequest request, MultipartFile file) {
+    public AiTurnResponse evaluateTurn(AiTurnRequest request) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
         body.add("user_id", request.userId());
@@ -59,9 +59,9 @@ public class AiGatewayClient {
         body.add("answer_id", request.answerId());
         body.add("mode", request.mode());
         body.add("question_text", request.questionText());
+        body.add("transcript", request.transcript());
         body.add("vision_metrics", request.visionMetrics());
         addRagContextIfPresent(body, request);
-        body.add("file", file.getResource());
 
         try {
             return aiRestClient.post()
