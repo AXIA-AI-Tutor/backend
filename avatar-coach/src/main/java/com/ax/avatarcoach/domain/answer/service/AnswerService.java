@@ -137,6 +137,9 @@ public class AnswerService {
 
         AiSttResponse sttResponse = aiGatewayClient.transcribe(request.file());
         answer.completeStt(sttResponse.transcript());
+        if (sttResponse.transcript() == null || sttResponse.transcript().isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
+        }
 
         List<AiRagContextItem> ragContext = corpusRagContextService.buildTurnRagContext(
             session,
@@ -151,21 +154,15 @@ public class AnswerService {
             session.getMode().name(),
             answer.getQuestionText(),
             sttResponse.transcript(),
-            request.file(),
             visionMetricsJson,
             ragContext
         );
 
         log.info(
-            "Submitting evaluateTurn with file. sessionId={}, answerId={}, transcriptPresent={}, fileNull={}, fileEmpty={}, fileSize={}, fileName={}, fileContentType={}",
+            "Submitting evaluateTurn with transcript. sessionId={}, answerId={}, transcriptPresent={}",
             session.getId(),
             answer.getId(),
-            sttResponse.transcript() != null && !sttResponse.transcript().isBlank(),
-            request.file() == null,
-            request.file() != null && request.file().isEmpty(),
-            request.file() != null ? request.file().getSize() : null,
-            request.file() != null ? request.file().getOriginalFilename() : null,
-            request.file() != null ? request.file().getContentType() : null
+            sttResponse.transcript() != null && !sttResponse.transcript().isBlank()
         );
 
         AiTurnResponse aiFeedback = aiGatewayClient.evaluateTurn(aiRequest);
