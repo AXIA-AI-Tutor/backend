@@ -1,14 +1,6 @@
 package com.ax.avatarcoach.global.ai.client;
 
-import com.ax.avatarcoach.global.ai.client.dto.AiEmbeddingRequest;
-import com.ax.avatarcoach.global.ai.client.dto.AiEmbeddingResponse;
-import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
-import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateResponse;
-import com.ax.avatarcoach.global.ai.client.dto.AiReportGenerateRequest;
-import com.ax.avatarcoach.global.ai.client.dto.AiReportGenerateResponse;
-import com.ax.avatarcoach.global.ai.client.dto.AiTurnRequest;
-import com.ax.avatarcoach.global.ai.client.dto.AiTurnResponse;
-import com.ax.avatarcoach.global.ai.client.dto.AiWarmupRequest;
+import com.ax.avatarcoach.global.ai.client.dto.*;
 import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +66,23 @@ public class AiGatewayClient {
                 .body(body)
                 .retrieve()
                 .body(AiTurnResponse.class);
+        } catch (RestClientException exception) {
+            throw toAiGatewayException(exception);
+        }
+    }
+
+    public AiSttResponse transcribe(MultipartFile file) {
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", file.getResource());
+        body.add("is_final", true);
+
+        try {
+            return aiRestClient.post()
+                .uri("/api/ai/stt")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(body)
+                .retrieve()
+                .body(AiSttResponse.class);
         } catch (RestClientException exception) {
             throw toAiGatewayException(exception);
         }

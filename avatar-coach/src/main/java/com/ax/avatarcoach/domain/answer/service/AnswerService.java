@@ -15,6 +15,7 @@ import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
 import com.ax.avatarcoach.domain.user.entity.User;
 import com.ax.avatarcoach.domain.user.repository.UserRepository;
 import com.ax.avatarcoach.global.ai.client.AiGatewayClient;
+import com.ax.avatarcoach.global.ai.client.dto.AiSttResponse;
 import com.ax.avatarcoach.global.ai.client.dto.AiTurnRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiTurnResponse;
 import com.ax.avatarcoach.global.exception.CustomException;
@@ -128,6 +129,9 @@ public class AnswerService {
             request.eyeContactScore(),
             request.postureScore()
         );
+
+        AiSttResponse sttResponse = aiGatewayClient.transcribe(request.file());
+        answer.completeStt(sttResponse.transcript());
 
         AiTurnRequest aiRequest = new AiTurnRequest(
             user.getId(),
