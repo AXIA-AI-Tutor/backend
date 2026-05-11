@@ -148,11 +148,12 @@ public class AnswerService {
             answer.getId(),
             session.getMode().name(),
             answer.getQuestionText(),
+            sttResponse.transcript(),
             visionMetricsJson,
             ragContext
         );
 
-        AiTurnResponse aiFeedback = aiGatewayClient.evaluateTurn(aiRequest, request.file());
+        AiTurnResponse aiFeedback = aiGatewayClient.evaluateTurn(aiRequest);
 
         answer.completeStt(aiFeedback.transcript());
 
