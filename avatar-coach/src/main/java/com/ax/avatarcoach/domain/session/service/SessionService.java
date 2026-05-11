@@ -18,6 +18,7 @@ import com.ax.avatarcoach.domain.user.repository.UserRepository;
 import com.ax.avatarcoach.global.ai.client.AiGatewayClient;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateResponse;
+import com.ax.avatarcoach.global.ai.service.AiWarmupService;
 import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import com.ax.avatarcoach.global.security.oauth.GoogleOAuth2UserInfo;
@@ -41,6 +42,7 @@ public class SessionService {
     private final SessionEventService sessionEventService;
     private final DocumentRepository documentRepository;
     private final AiGatewayClient aiGatewayClient;
+    private final AiWarmupService aiWarmupService;
     private final AnswerRepository answerRepository;
     private final FeedbackRepository feedbackRepository;
     private final ObjectProvider<CorpusRagContextService> corpusRagContextServiceProvider;
@@ -60,6 +62,8 @@ public class SessionService {
             SessionEventType.SESSION_CREATED,
             null
         );
+
+        aiWarmupService.warmupForSessionCreate();
 
         return SessionResponse.from(savedSession);
     }
