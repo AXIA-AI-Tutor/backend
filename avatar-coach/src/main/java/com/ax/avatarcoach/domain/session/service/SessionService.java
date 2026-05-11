@@ -16,6 +16,7 @@ import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
 import com.ax.avatarcoach.domain.user.entity.User;
 import com.ax.avatarcoach.domain.user.repository.UserRepository;
 import com.ax.avatarcoach.global.ai.client.AiGatewayClient;
+import com.ax.avatarcoach.global.ai.client.dto.AiPlanHints;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateResponse;
 import com.ax.avatarcoach.global.ai.client.dto.AiRagContextItem;
@@ -129,7 +130,8 @@ public class SessionService {
             1,
             List.of(),
             List.of(),
-            List.of()
+            List.of(),
+            null
         );
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
@@ -196,6 +198,11 @@ public class SessionService {
                 ? List.of()
                 : corpusRagContextService.buildQuestionRagContext(session, ragQuery);
 
+        AiPlanHints planHints =
+            corpusRagContextService == null
+                ? null
+                : corpusRagContextService.buildPlanHints(ragContext);
+
         AiQuestionGenerateRequest aiRequest = new AiQuestionGenerateRequest(
             user.getId(),
             session.getId(),
@@ -206,7 +213,8 @@ public class SessionService {
             nextQuestionIndex,
             previousQuestions,
             previousTurns,
-            ragContext
+            ragContext,
+            planHints
         );
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);

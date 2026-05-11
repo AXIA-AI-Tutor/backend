@@ -31,7 +31,11 @@ public record AiQuestionGenerateRequest(
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("rag_context")
-    List<AiRagContextItem> ragContext
+    List<AiRagContextItem> ragContext,
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("plan_hints")
+    AiPlanHints planHints
 ) {
     public record PreviousTurn(
         @JsonProperty("answer_id")
