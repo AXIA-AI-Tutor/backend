@@ -24,6 +24,7 @@ import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import com.ax.avatarcoach.global.security.oauth.GoogleOAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class AnswerService {
 
     private final AnswerRepository answerRepository;
@@ -149,8 +151,21 @@ public class AnswerService {
             session.getMode().name(),
             answer.getQuestionText(),
             sttResponse.transcript(),
+            request.file(),
             visionMetricsJson,
             ragContext
+        );
+
+        log.info(
+            "Submitting evaluateTurn with file. sessionId={}, answerId={}, transcriptPresent={}, fileNull={}, fileEmpty={}, fileSize={}, fileName={}, fileContentType={}",
+            session.getId(),
+            answer.getId(),
+            sttResponse.transcript() != null && !sttResponse.transcript().isBlank(),
+            request.file() == null,
+            request.file() != null && request.file().isEmpty(),
+            request.file() != null ? request.file().getSize() : null,
+            request.file() != null ? request.file().getOriginalFilename() : null,
+            request.file() != null ? request.file().getContentType() : null
         );
 
         AiTurnResponse aiFeedback = aiGatewayClient.evaluateTurn(aiRequest);

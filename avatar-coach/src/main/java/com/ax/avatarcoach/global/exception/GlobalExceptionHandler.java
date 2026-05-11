@@ -3,6 +3,7 @@ package com.ax.avatarcoach.global.exception;
 import com.ax.avatarcoach.global.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -15,6 +16,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleCustomException(CustomException exception) {
         ErrorCode errorCode = exception.getErrorCode();
 
+        return ResponseEntity
+            .status(errorCode.getStatus())
+            .body(ErrorResponse.of(errorCode.getCode(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupportedException(
+        HttpRequestMethodNotSupportedException exception
+    ) {
+        log.warn("Method not allowed. method={}, uri={}", exception.getMethod(), exception.getMessage());
+
+        ErrorCode errorCode = ErrorCode.METHOD_NOT_ALLOWED;
         return ResponseEntity
             .status(errorCode.getStatus())
             .body(ErrorResponse.of(errorCode.getCode(), errorCode.getMessage()));
