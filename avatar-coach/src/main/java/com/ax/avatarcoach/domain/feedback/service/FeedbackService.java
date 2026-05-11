@@ -39,8 +39,8 @@ public class FeedbackService {
         }
 
         return createFeedbackInternal(answer.getId(), new InternalFeedbackCreateRequest(
-            request.summary(), request.evidence(), request.improvementExample(), request.structureScore(),
-            request.specificityScore(), request.relevanceScore(), request.deliveryScore()
+            request.summary(), request.evidence(), request.improvementExample(), null,
+            request.structureScore(), request.specificityScore(), request.relevanceScore(), request.deliveryScore()
         ));
     }
 
@@ -56,6 +56,7 @@ public class FeedbackService {
             request.summary(),
             request.evidence(),
             request.improvementExample(),
+            request.ttsAudioUrl(),
             request.structureScore(),
             request.specificityScore(),
             request.relevanceScore(),

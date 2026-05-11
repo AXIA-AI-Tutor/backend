@@ -27,6 +27,9 @@ public class Feedback extends BaseTimeEntity {
     @Column(name = "improvement_example", columnDefinition = "text")
     private String improvementExample;
 
+    @Column(name = "tts_audio_url", columnDefinition = "text")
+    private String ttsAudioUrl;
+
     @Column(name = "structure_score")
     private Integer structureScore;
 
@@ -44,6 +47,7 @@ public class Feedback extends BaseTimeEntity {
         String summary,
         String evidence,
         String improvementExample,
+        String ttsAudioUrl,
         Integer structureScore,
         Integer specificityScore,
         Integer relevanceScore,
@@ -54,6 +58,7 @@ public class Feedback extends BaseTimeEntity {
         feedback.summary = summary;
         feedback.evidence = evidence;
         feedback.improvementExample = improvementExample;
+        feedback.ttsAudioUrl = ttsAudioUrl;
         feedback.structureScore = structureScore;
         feedback.specificityScore = specificityScore;
         feedback.relevanceScore = relevanceScore;
