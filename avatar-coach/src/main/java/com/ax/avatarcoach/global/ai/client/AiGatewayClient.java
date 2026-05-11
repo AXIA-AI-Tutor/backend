@@ -3,6 +3,8 @@ package com.ax.avatarcoach.global.ai.client;
 import com.ax.avatarcoach.global.ai.client.dto.*;
 import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class AiGatewayClient {
 
     private final RestClient aiRestClient;
+    private final ObjectMapper objectMapper;
 
     public String healthCheck() {
         try {
@@ -48,7 +51,7 @@ public class AiGatewayClient {
         }
     }
 
-    public AiTurnResponse evaluateTurn(AiTurnRequest request, MultipartFile file) {
+    public AiTurnResponse evaluateTurn(AiTurnRequest request) {
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
         body.add("user_id", request.userId());
@@ -56,8 +59,9 @@ public class AiGatewayClient {
         body.add("answer_id", request.answerId());
         body.add("mode", request.mode());
         body.add("question_text", request.questionText());
+        body.add("transcript", request.transcript());
         body.add("vision_metrics", request.visionMetrics());
-        body.add("file", file.getResource());
+        addRagContextIfPresent(body, request);
 
         try {
             return aiRestClient.post()
@@ -68,6 +72,21 @@ public class AiGatewayClient {
                 .body(AiTurnResponse.class);
         } catch (RestClientException exception) {
             throw toAiGatewayException(exception);
+        }
+    }
+
+    private void addRagContextIfPresent(
+        MultiValueMap<String, Object> body,
+        AiTurnRequest request
+    ) {
+        if (request.ragContext() == null || request.ragContext().isEmpty()) {
+            return;
+        }
+
+        try {
+            body.add("rag_context", objectMapper.writeValueAsString(request.ragContext()));
+        } catch (JsonProcessingException exception) {
+            log.warn("Failed to serialize turn rag_context. answerId={}", request.answerId(), exception);
         }
     }
 

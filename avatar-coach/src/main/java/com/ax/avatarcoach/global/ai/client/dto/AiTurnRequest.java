@@ -1,6 +1,9 @@
 package com.ax.avatarcoach.global.ai.client.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
 
 public record AiTurnRequest(
     @JsonProperty("user_id")
@@ -17,7 +20,13 @@ public record AiTurnRequest(
     @JsonProperty("question_text")
     String questionText,
 
+    String transcript,
+
     @JsonProperty("vision_metrics")
-    String visionMetrics
+    String visionMetrics,
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("rag_context")
+    List<AiRagContextItem> ragContext
 ) {
 }
