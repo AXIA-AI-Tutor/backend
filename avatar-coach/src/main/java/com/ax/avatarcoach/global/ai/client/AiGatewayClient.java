@@ -6,6 +6,7 @@ import com.ax.avatarcoach.global.ai.client.dto.AiReportGenerateRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiReportGenerateResponse;
 import com.ax.avatarcoach.global.ai.client.dto.AiTurnRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiTurnResponse;
+import com.ax.avatarcoach.global.ai.client.dto.AiWarmupRequest;
 import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -83,6 +84,18 @@ public class AiGatewayClient {
                 .body(request)
                 .retrieve()
                 .body(AiReportGenerateResponse.class);
+        } catch (RestClientException exception) {
+            throw toAiGatewayException(exception);
+        }
+    }
+
+    public void warmup(AiWarmupRequest request) {
+        try {
+            aiRestClient.post()
+                .uri("/api/ai/warmup")
+                .body(request)
+                .retrieve()
+                .toBodilessEntity();
         } catch (RestClientException exception) {
             throw toAiGatewayException(exception);
         }
