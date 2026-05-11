@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -22,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Slf4j
 public class AnswerController {
 
     private final AnswerService answerService;
@@ -76,6 +78,16 @@ public class AnswerController {
         @Valid @ModelAttribute AnswerSubmitRequest request,
         @AuthenticationPrincipal OAuth2User oAuth2User
     ) {
+        log.info(
+            "submitAnswerWithFeedback file metadata. sessionId={}, fileNull={}, fileEmpty={}, fileSize={}, fileOriginalFilename={}, fileContentType={}",
+            sessionId,
+            request.file() == null,
+            request.file() != null && request.file().isEmpty(),
+            request.file() != null ? request.file().getSize() : null,
+            request.file() != null ? request.file().getOriginalFilename() : null,
+            request.file() != null ? request.file().getContentType() : null
+        );
+
         return ApiResponse.success(
             answerService.submitAnswerWithFeedback(sessionId, request, oAuth2User)
         );
