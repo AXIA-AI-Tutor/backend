@@ -148,6 +148,7 @@ public class AnswerService {
                 aiFeedback.summary(),
                 aiFeedback.evidence(),
                 aiFeedback.improvementExample(),
+                aiFeedback.ttsAudioUrl(),
                 aiFeedback.structureScore(),
                 aiFeedback.specificityScore(),
                 aiFeedback.relevanceScore(),
