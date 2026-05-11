@@ -35,3 +35,13 @@ ai:
   server:
     base-url: ${AI_SERVER_BASE_URL}
     token: ${AI_SERVER_TOKEN}
+
+rag:
+  embedding:
+    provider: ${RAG_EMBEDDING_PROVIDER:ai_worker}
+    model: ${RAG_EMBEDDING_MODEL:bge-m3}
+    dimensions: ${RAG_EMBEDDING_DIMENSIONS:1024}
+    normalize: ${RAG_EMBEDDING_NORMALIZE:true}
+    query-timeout-ms: ${RAG_EMBEDDING_QUERY_TIMEOUT_MS:5000}
+    ingest-timeout-ms: ${RAG_EMBEDDING_INGEST_TIMEOUT_MS:60000}
+    max-retries: ${RAG_EMBEDDING_MAX_RETRIES:2}

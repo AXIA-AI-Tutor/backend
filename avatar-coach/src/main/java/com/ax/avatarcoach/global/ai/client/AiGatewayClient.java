@@ -1,5 +1,7 @@
 package com.ax.avatarcoach.global.ai.client;
 
+import com.ax.avatarcoach.global.ai.client.dto.AiEmbeddingRequest;
+import com.ax.avatarcoach.global.ai.client.dto.AiEmbeddingResponse;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateResponse;
 import com.ax.avatarcoach.global.ai.client.dto.AiReportGenerateRequest;
@@ -96,6 +98,18 @@ public class AiGatewayClient {
                 .body(request)
                 .retrieve()
                 .toBodilessEntity();
+        } catch (RestClientException exception) {
+            throw toAiGatewayException(exception);
+        }
+    }
+
+    public AiEmbeddingResponse generateEmbedding(AiEmbeddingRequest request) {
+        try {
+            return aiRestClient.post()
+                .uri("/api/ai/embeddings")
+                .body(request)
+                .retrieve()
+                .body(AiEmbeddingResponse.class);
         } catch (RestClientException exception) {
             throw toAiGatewayException(exception);
         }
