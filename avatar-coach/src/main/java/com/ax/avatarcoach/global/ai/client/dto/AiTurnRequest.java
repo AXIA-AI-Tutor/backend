@@ -2,6 +2,7 @@ package com.ax.avatarcoach.global.ai.client.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ public record AiTurnRequest(
     String questionText,
 
     String transcript,
+    MultipartFile file,
 
     @JsonProperty("vision_metrics")
     String visionMetrics,

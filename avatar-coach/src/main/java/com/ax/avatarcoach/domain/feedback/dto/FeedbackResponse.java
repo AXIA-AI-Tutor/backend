@@ -1,5 +1,6 @@
 package com.ax.avatarcoach.domain.feedback.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ax.avatarcoach.domain.feedback.entity.Feedback;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,8 @@ public record FeedbackResponse(
     String summary,
     String evidence,
     String improvementExample,
+    @JsonProperty("tts_audio_url")
+    String ttsAudioUrl,
     Integer structureScore,
     Integer specificityScore,
     Integer relevanceScore,
@@ -23,6 +26,7 @@ public record FeedbackResponse(
             feedback.getSummary(),
             feedback.getEvidence(),
             feedback.getImprovementExample(),
+            feedback.getTtsAudioUrl(),
             feedback.getStructureScore(),
             feedback.getSpecificityScore(),
             feedback.getRelevanceScore(),
