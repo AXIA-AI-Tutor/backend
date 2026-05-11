@@ -1,7 +1,7 @@
 package com.ax.avatarcoach.domain.corpus.service;
 
 import com.ax.avatarcoach.domain.corpus.dto.CorpusSearchResult;
-import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
+import com.ax.avatarcoach.global.ai.client.dto.AiRagContextItem;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +16,8 @@ public class CorpusRagContextMapper {
 
     private final ObjectMapper objectMapper;
 
-    public AiQuestionGenerateRequest.RagContextItem toRagContextItem(CorpusSearchResult result) {
-        return new AiQuestionGenerateRequest.RagContextItem(
+    public AiRagContextItem toRagContextItem(CorpusSearchResult result) {
+        return new AiRagContextItem(
             "global_corpus",
             result.recordId(),
             result.recordType(),
