@@ -4,6 +4,7 @@ import com.ax.avatarcoach.domain.answer.dto.*;
 import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.entity.SttStatus;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
+import com.ax.avatarcoach.domain.corpus.service.CorpusRagContextService;
 import com.ax.avatarcoach.domain.feedback.dto.FeedbackResponse;
 import com.ax.avatarcoach.domain.feedback.dto.InternalFeedbackCreateRequest;
 import com.ax.avatarcoach.domain.feedback.repository.FeedbackRepository;
@@ -15,6 +16,7 @@ import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
 import com.ax.avatarcoach.domain.user.entity.User;
 import com.ax.avatarcoach.domain.user.repository.UserRepository;
 import com.ax.avatarcoach.global.ai.client.AiGatewayClient;
+import com.ax.avatarcoach.global.ai.client.dto.AiRagContextItem;
 import com.ax.avatarcoach.global.ai.client.dto.AiSttResponse;
 import com.ax.avatarcoach.global.ai.client.dto.AiTurnRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiTurnResponse;
@@ -40,6 +42,7 @@ public class AnswerService {
     private final UserRepository userRepository;
     private final FeedbackService feedbackService;
     private final AiGatewayClient aiGatewayClient;
+    private final CorpusRagContextService corpusRagContextService;
 
     public List<AnswerResponse> getSessionAnswers(Long sessionId, OAuth2User oAuth2User) {
         User user = getCurrentUser(oAuth2User);
@@ -133,13 +136,20 @@ public class AnswerService {
         AiSttResponse sttResponse = aiGatewayClient.transcribe(request.file());
         answer.completeStt(sttResponse.transcript());
 
+        List<AiRagContextItem> ragContext = corpusRagContextService.buildTurnRagContext(
+            session,
+            answer.getQuestionText(),
+            sttResponse.transcript()
+        );
+
         AiTurnRequest aiRequest = new AiTurnRequest(
             user.getId(),
             session.getId(),
             answer.getId(),
             session.getMode().name(),
             answer.getQuestionText(),
-            visionMetricsJson
+            visionMetricsJson,
+            ragContext
         );
 
         AiTurnResponse aiFeedback = aiGatewayClient.evaluateTurn(aiRequest, request.file());

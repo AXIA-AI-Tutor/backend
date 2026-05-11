@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
-import java.util.Map;
 
 public record AiQuestionGenerateRequest(
     @JsonProperty("user_id")
@@ -32,7 +31,7 @@ public record AiQuestionGenerateRequest(
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("rag_context")
-    List<RagContextItem> ragContext
+    List<AiRagContextItem> ragContext
 ) {
     public record PreviousTurn(
         @JsonProperty("answer_id")
@@ -51,39 +50,6 @@ public record AiQuestionGenerateRequest(
 
         @JsonProperty("improvement_example")
         String improvementExample
-    ) {
-    }
-
-    public record RagContextItem(
-        String source,
-
-        @JsonProperty("record_id")
-        String recordId,
-
-        @JsonProperty("record_type")
-        String recordType,
-
-        String target,
-
-        String difficulty,
-
-        @JsonProperty("followup_strategy")
-        String followupStrategy,
-
-        @JsonProperty("topic_path")
-        List<String> topicPath,
-
-        Double score,
-
-        String text,
-
-        Map<String, Object> rubric,
-
-        @JsonProperty("followup_pattern_ext")
-        Map<String, Object> followupPatternExt,
-
-        @JsonProperty("source_refs")
-        List<Map<String, Object>> sourceRefs
     ) {
     }
 }

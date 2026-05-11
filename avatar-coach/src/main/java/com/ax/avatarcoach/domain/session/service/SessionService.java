@@ -18,6 +18,7 @@ import com.ax.avatarcoach.domain.user.repository.UserRepository;
 import com.ax.avatarcoach.global.ai.client.AiGatewayClient;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateRequest;
 import com.ax.avatarcoach.global.ai.client.dto.AiQuestionGenerateResponse;
+import com.ax.avatarcoach.global.ai.client.dto.AiRagContextItem;
 import com.ax.avatarcoach.global.ai.service.AiWarmupService;
 import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
@@ -190,7 +191,7 @@ public class SessionService {
         CorpusRagContextService corpusRagContextService =
             corpusRagContextServiceProvider.getIfAvailable();
 
-        List<AiQuestionGenerateRequest.RagContextItem> ragContext =
+        List<AiRagContextItem> ragContext =
             corpusRagContextService == null
                 ? List.of()
                 : corpusRagContextService.buildQuestionRagContext(session, ragQuery);
