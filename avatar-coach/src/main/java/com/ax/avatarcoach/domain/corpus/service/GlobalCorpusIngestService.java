@@ -49,11 +49,13 @@ public class GlobalCorpusIngestService {
         int recordsSaved = 0;
         int recordsSkipped = 0;
 
-        for (CorpusSourceChunkLine line : readJsonLines(sourceChunksPath, CorpusSourceChunkLine.class)) {
-            if (saveSourceChunk(line, artifactName, artifactVersion, artifactVariant, artifactUri)) {
-                sourceChunksSaved++;
-            } else {
-                sourceChunksSkipped++;
+        if (Files.exists(sourceChunksPath)) {
+            for (CorpusSourceChunkLine line : readJsonLines(sourceChunksPath, CorpusSourceChunkLine.class)) {
+                if (saveSourceChunk(line, artifactName, artifactVersion, artifactVariant, artifactUri)) {
+                    sourceChunksSaved++;
+                } else {
+                    sourceChunksSkipped++;
+                }
             }
         }
 

@@ -26,3 +26,16 @@ server:
       cookie:
         same-site: none
         secure: true
+
+corpus:
+  ingest-job:
+    enabled: ${CORPUS_INGEST_JOB_ENABLED:false}
+    artifact-uri: ${CORPUS_ARTIFACT_URI:}
+    artifact-name: ${CORPUS_ARTIFACT_NAME:global-corpus}
+    artifact-version: ${CORPUS_ARTIFACT_VERSION:unknown}
+    artifact-variant: ${CORPUS_ARTIFACT_VARIANT:demo}
+
+  embedding-job:
+    enabled: ${CORPUS_EMBEDDING_JOB_ENABLED:false}
+    batch-size: ${CORPUS_EMBEDDING_JOB_BATCH_SIZE:100}
+    max-batches: ${CORPUS_EMBEDDING_JOB_MAX_BATCHES:100}

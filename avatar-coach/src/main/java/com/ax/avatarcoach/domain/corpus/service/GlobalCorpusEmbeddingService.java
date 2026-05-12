@@ -4,13 +4,11 @@ import com.ax.avatarcoach.domain.corpus.entity.GlobalCorpusRecord;
 import com.ax.avatarcoach.domain.corpus.repository.GlobalCorpusEmbeddingJdbcRepository;
 import com.ax.avatarcoach.domain.corpus.repository.GlobalCorpusRecordRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-@Profile("local")
 @Service
 @RequiredArgsConstructor
 @Transactional
