@@ -26,3 +26,11 @@ server:
       cookie:
         same-site: none
         secure: true
+
+corpus:
+  ingest-job:
+    enabled: ${CORPUS_INGEST_JOB_ENABLED:false}
+    artifact-uri: ${CORPUS_ARTIFACT_URI:}
+    artifact-name: ${CORPUS_ARTIFACT_NAME:global-corpus}
+    artifact-version: ${CORPUS_ARTIFACT_VERSION:unknown}
+    artifact-variant: ${CORPUS_ARTIFACT_VARIANT:demo}
