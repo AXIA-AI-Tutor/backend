@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 public class GlobalCorpusIngestService {
 
     private static final String DEFAULT_LANGUAGE = "ko";
+    private static final String ESCAPED_NULL_BYTE = "\\u" + "0000";
 
     private final GlobalCorpusSourceRepository sourceRepository;
     private final GlobalCorpusRecordRepository recordRepository;
@@ -125,17 +126,28 @@ public class GlobalCorpusIngestService {
         }
 
         try {
-            return objectMapper.writeValueAsString(value);
+            return sanitizeText(objectMapper.writeValueAsString(value));
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Failed to serialize corpus json field", e);
         }
     }
 
     private String defaultLanguage(String language) {
-        if (language == null || language.isBlank()) {
+        String sanitizedLanguage = sanitizeText(language);
+        if (sanitizedLanguage == null || sanitizedLanguage.isBlank()) {
             return DEFAULT_LANGUAGE;
         }
-        return language;
+        return sanitizedLanguage;
+    }
+
+    private String sanitizeText(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return value
+            .replace(String.valueOf((char) 0), "")
+            .replace(ESCAPED_NULL_BYTE, "");
     }
 
     private GlobalCorpusSource getOrCreateSource(
@@ -147,16 +159,18 @@ public class GlobalCorpusIngestService {
         String artifactVariant,
         String artifactUri
     ) {
-        return sourceRepository.findBySourceKey(sourceKey)
+        String sanitizedSourceKey = sanitizeText(sourceKey);
+
+        return sourceRepository.findBySourceKey(sanitizedSourceKey)
             .orElseGet(() -> sourceRepository.save(
                 GlobalCorpusSource.create(
-                    sourceKey,
-                    sourceTitle,
-                    sourceLicense,
-                    artifactName,
-                    artifactVersion,
-                    artifactVariant,
-                    artifactUri,
+                    sanitizedSourceKey,
+                    sanitizeText(sourceTitle),
+                    sanitizeText(sourceLicense),
+                    sanitizeText(artifactName),
+                    sanitizeText(artifactVersion),
+                    sanitizeText(artifactVariant),
+                    sanitizeText(artifactUri),
                     "{}"
                 )
             ));
@@ -169,12 +183,15 @@ public class GlobalCorpusIngestService {
         String artifactVariant,
         String artifactUri
     ) {
-        if (sourceChunkRepository.existsBySourceChunkId(line.sourceChunkId())) {
+        String sourceChunkId = sanitizeText(line.sourceChunkId());
+        String sourceId = sanitizeText(line.sourceId());
+
+        if (sourceChunkRepository.existsBySourceChunkId(sourceChunkId)) {
             return false;
         }
 
         GlobalCorpusSource source = getOrCreateSource(
-            line.sourceId(),
+            sourceId,
             line.sourceTitle(),
             line.sourceLicense(),
             artifactName,
@@ -186,21 +203,21 @@ public class GlobalCorpusIngestService {
         sourceChunkRepository.save(
             GlobalCorpusSourceChunk.create(
                 source,
-                line.sourceChunkId(),
-                line.target(),
-                line.sourceId(),
-                line.sourceTitle(),
-                line.sourceType(),
-                line.sourceUrl(),
-                line.sourceVersion(),
-                line.sourceLicense(),
+                sourceChunkId,
+                sanitizeText(line.target()),
+                sourceId,
+                sanitizeText(line.sourceTitle()),
+                sanitizeText(line.sourceType()),
+                sanitizeText(line.sourceUrl()),
+                sanitizeText(line.sourceVersion()),
+                sanitizeText(line.sourceLicense()),
                 line.chunkIndex(),
                 toJson(line.headingPath(), "[]"),
-                line.text(),
-                line.textHash(),
-                line.sourceHash(),
-                line.rawTextHash(),
-                line.normalizedTextHash(),
+                sanitizeText(line.text()),
+                sanitizeText(line.textHash()),
+                sanitizeText(line.sourceHash()),
+                sanitizeText(line.rawTextHash()),
+                sanitizeText(line.normalizedTextHash()),
                 toJson(line.metadata(), "{}"),
                 toJson(line.sourceRefs(), "[]")
             )
@@ -216,7 +233,9 @@ public class GlobalCorpusIngestService {
         String artifactVariant,
         String artifactUri
     ) {
-        if (recordRepository.existsByRecordId(line.id())) {
+        String recordId = sanitizeText(line.id());
+
+        if (recordRepository.existsByRecordId(recordId)) {
             return false;
         }
 
@@ -233,21 +252,21 @@ public class GlobalCorpusIngestService {
         recordRepository.save(
             GlobalCorpusRecord.create(
                 source,
-                line.id(),
-                line.requestId(),
-                line.target(),
+                recordId,
+                sanitizeText(line.requestId()),
+                sanitizeText(line.target()),
                 defaultLanguage(line.language()),
-                line.recordType(),
-                line.difficulty(),
+                sanitizeText(line.recordType()),
+                sanitizeText(line.difficulty()),
                 toJson(line.topicPath(), "[]"),
                 toJson(line.tags(), "[]"),
-                line.followupStrategy(),
-                line.embeddingTextKo(),
-                line.questionKo(),
-                line.answerKo(),
-                line.followupQuestionKo(),
-                line.conceptKo(),
-                line.interviewUse(),
+                sanitizeText(line.followupStrategy()),
+                sanitizeText(line.embeddingTextKo()),
+                sanitizeText(line.questionKo()),
+                sanitizeText(line.answerKo()),
+                sanitizeText(line.followupQuestionKo()),
+                sanitizeText(line.conceptKo()),
+                sanitizeText(line.interviewUse()),
                 toJson(line.rubric(), "{}"),
                 toJson(line.followupPatternExt(), "{}"),
                 toJson(line.sourceRefs(), "[]"),
