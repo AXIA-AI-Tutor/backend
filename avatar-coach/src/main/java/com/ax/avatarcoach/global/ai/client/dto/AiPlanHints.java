@@ -1,5 +1,6 @@
 package com.ax.avatarcoach.global.ai.client.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
@@ -18,6 +19,7 @@ public record AiPlanHints(
     @JsonProperty("good_question_examples")
     List<String> goodQuestionExamples
 ) {
+    @JsonIgnore
     public boolean isEmpty() {
         return isBlank(anchorCandidates)
             && isBlank(mustCheck)

@@ -7,12 +7,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
 public class CorpusRagContextMapper {
+
+    private static final Set<String> RUBRIC_ALLOWED_KEYS = Set.of(
+        "must_include",
+        "bad_signals"
+    );
+
+    private static final Set<String> FOLLOWUP_PATTERN_EXT_ALLOWED_KEYS = Set.of(
+        "anchor_examples_ko",
+        "must_include_in_question",
+        "negative_phrases_ko",
+        "good_question_examples_ko"
+    );
+
+    private static final Set<String> SOURCE_REF_ALLOWED_KEYS = Set.of(
+        "source_id",
+        "source_title",
+        "source_license"
+    );
 
     private final ObjectMapper objectMapper;
 
@@ -25,12 +45,39 @@ public class CorpusRagContextMapper {
             result.difficulty(),
             result.followupStrategy(),
             readStringList(result.topicPathJson()),
-            result.score(),
+            normalizeScore(result.score()),
             buildText(result),
-            readObjectMap(result.rubricJson()),
-            readObjectMap(result.followupPatternExtJson()),
-            readObjectMapList(result.sourceRefsJson())
+            filterMap(readObjectMap(result.rubricJson()), RUBRIC_ALLOWED_KEYS),
+            filterMap(readObjectMap(result.followupPatternExtJson()), FOLLOWUP_PATTERN_EXT_ALLOWED_KEYS),
+            readObjectMapList(result.sourceRefsJson()).stream()
+                .map(sourceRef -> filterMap(sourceRef, SOURCE_REF_ALLOWED_KEYS))
+                .filter(sourceRef -> !sourceRef.isEmpty())
+                .toList()
         );
+    }
+
+    private Double normalizeScore(double score) {
+        if (Double.isNaN(score) || Double.isInfinite(score)) {
+            return null;
+        }
+
+        return Math.max(0.0, Math.min(1.0, score));
+    }
+
+    private Map<String, Object> filterMap(Map<String, Object> source, Set<String> allowedKeys) {
+        if (source == null || source.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Object> filtered = new LinkedHashMap<>();
+
+        for (String key : allowedKeys) {
+            if (source.containsKey(key)) {
+                filtered.put(key, source.get(key));
+            }
+        }
+
+        return filtered;
     }
 
     private String buildText(CorpusSearchResult result) {
