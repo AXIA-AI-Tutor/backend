@@ -4,6 +4,7 @@ import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
 import com.ax.avatarcoach.domain.corpus.service.CorpusRagContextService;
 import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
+import com.ax.avatarcoach.domain.document.entity.Document;
 import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
 import com.ax.avatarcoach.domain.feedback.entity.Feedback;
 import com.ax.avatarcoach.domain.feedback.repository.FeedbackRepository;
@@ -131,7 +132,8 @@ public class SessionService {
             List.of(),
             List.of(),
             List.of(),
-            null
+            null,
+            getDocumentSummaries(sessionId, user.getId())
         );
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
@@ -214,7 +216,8 @@ public class SessionService {
             previousQuestions,
             previousTurns,
             ragContext,
-            planHints
+            planHints,
+            getDocumentSummaries(sessionId, user.getId())
         );
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
@@ -271,6 +274,26 @@ public class SessionService {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private List<AiQuestionGenerateRequest.DocumentSummary> getDocumentSummaries(Long sessionId, Long userId) {
+        return documentRepository.findAllBySessionIdAndUserIdAndStatusOrderByCreatedAtDesc(
+                sessionId,
+                userId,
+                DocumentStatus.READY_FOR_AI
+            ).stream()
+            .filter(document -> document.getSummary() != null && !document.getSummary().isBlank())
+            .map(this::toDocumentSummary)
+            .toList();
+    }
+
+    private AiQuestionGenerateRequest.DocumentSummary toDocumentSummary(Document document) {
+        return new AiQuestionGenerateRequest.DocumentSummary(
+            document.getId(),
+            document.getDocType().name(),
+            document.getOriginalFileName(),
+            document.getSummary()
+        );
     }
 
     private User getCurrentUser(OAuth2User oAuth2User) {
