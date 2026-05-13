@@ -41,11 +41,20 @@ public class AiGatewayClient {
 
     public AiQuestionGenerateResponse generateQuestion(AiQuestionGenerateRequest request) {
         try {
-            return aiRestClient.post()
+            AiQuestionGenerateResponse response = aiRestClient.post()
                 .uri("/api/ai/questions")
                 .body(request)
                 .retrieve()
                 .body(AiQuestionGenerateResponse.class);
+            String questionText = response == null ? null : response.questionText();
+            log.info(
+                "[AI_QUESTION_RESPONSE] sessionId={}, questionIndex={}, status=200, questionTextPresent={}, questionTextLength={}",
+                request.sessionId(),
+                request.questionIndex(),
+                questionText != null && !questionText.isBlank(),
+                questionText == null ? 0 : questionText.length()
+            );
+            return response;
         } catch (RestClientException exception) {
             throw toAiGatewayException(exception);
         }

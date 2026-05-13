@@ -19,6 +19,7 @@ import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import com.ax.avatarcoach.global.security.oauth.GoogleOAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class DocumentService {
@@ -75,7 +77,22 @@ public class DocumentService {
             null
         );
 
-        return DocumentMetadataResponse.from(documentRepository.save(document));
+        Document savedDocument = documentRepository.save(document);
+        log.info(
+            "[DOCUMENT_METADATA_CREATED] sessionId={}, userId={}, documentId={}, docType={}, originalFileName={}, fileSize={}, uploadStatus={}, status={}, storageBucket={}, storagePath={}, createdAt={}",
+            savedDocument.getSession().getId(),
+            savedDocument.getUser().getId(),
+            savedDocument.getId(),
+            savedDocument.getDocType(),
+            savedDocument.getOriginalFileName(),
+            savedDocument.getFileSize(),
+            savedDocument.getUploadStatus(),
+            savedDocument.getStatus(),
+            savedDocument.getStorageBucket(),
+            savedDocument.getStoragePath(),
+            savedDocument.getCreatedAt()
+        );
+        return DocumentMetadataResponse.from(savedDocument);
     }
 
     @Transactional
@@ -105,6 +122,20 @@ public class DocumentService {
         );
 
         Document saved = documentRepository.save(document);
+        log.info(
+            "[DOCUMENT_METADATA_CREATED] sessionId={}, userId={}, documentId={}, docType={}, originalFileName={}, fileSize={}, uploadStatus={}, status={}, storageBucket={}, storagePath={}, createdAt={}",
+            saved.getSession().getId(),
+            saved.getUser().getId(),
+            saved.getId(),
+            saved.getDocType(),
+            saved.getOriginalFileName(),
+            saved.getFileSize(),
+            saved.getUploadStatus(),
+            saved.getStatus(),
+            saved.getStorageBucket(),
+            saved.getStoragePath(),
+            saved.getCreatedAt()
+        );
         String uploadUrl = storageService.generatePutSignedUrl(
             gcpStorageProperties.bucketName(),
             storagePath,
@@ -160,6 +191,17 @@ public class DocumentService {
         }
 
         document.markUploaded(LocalDateTime.now(ZoneOffset.UTC));
+        log.info(
+            "[DOCUMENT_UPLOAD_COMPLETED] documentId={}, sessionId={}, userId={}, uploadStatus={}, status={}, fileSize={}, storagePath={}, uploadedAt={}",
+            document.getId(),
+            document.getSession().getId(),
+            document.getUser().getId(),
+            document.getUploadStatus(),
+            document.getStatus(),
+            document.getFileSize(),
+            document.getStoragePath(),
+            document.getUploadedAt()
+        );
         return document;
     }
 

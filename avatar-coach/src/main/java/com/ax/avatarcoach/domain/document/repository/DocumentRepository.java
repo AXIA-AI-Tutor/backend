@@ -19,4 +19,10 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
         Long userId,
         DocumentStatus status
     );
+
+    List<Document> findAllBySessionIdAndUserIdAndStatusInOrderByCreatedAtDesc(
+        Long sessionId,
+        Long userId,
+        List<DocumentStatus> statuses
+    );
 }

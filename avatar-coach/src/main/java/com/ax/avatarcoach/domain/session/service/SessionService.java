@@ -26,6 +26,7 @@ import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import com.ax.avatarcoach.global.security.oauth.GoogleOAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SessionService {
@@ -121,6 +123,7 @@ public class SessionService {
             null
         );
 
+        List<AiQuestionGenerateRequest.DocumentSummary> documentSummaries = getDocumentSummaries(sessionId, user.getId());
         AiQuestionGenerateRequest aiRequest = new AiQuestionGenerateRequest(
             user.getId(),
             session.getId(),
@@ -133,8 +136,9 @@ public class SessionService {
             List.of(),
             List.of(),
             null,
-            getDocumentSummaries(sessionId, user.getId())
+            documentSummaries
         );
+        logQuestionRequest(session, user, 1, List.of(), List.of(), List.of(), null, documentSummaries, "/api/ai/questions");
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
 
@@ -205,6 +209,7 @@ public class SessionService {
                 ? null
                 : corpusRagContextService.buildPlanHints(ragContext);
 
+        List<AiQuestionGenerateRequest.DocumentSummary> documentSummaries = getDocumentSummaries(sessionId, user.getId());
         AiQuestionGenerateRequest aiRequest = new AiQuestionGenerateRequest(
             user.getId(),
             session.getId(),
@@ -217,8 +222,9 @@ public class SessionService {
             previousTurns,
             ragContext,
             planHints,
-            getDocumentSummaries(sessionId, user.getId())
+            documentSummaries
         );
+        logQuestionRequest(session, user, nextQuestionIndex, previousQuestions, previousTurns, ragContext, planHints, documentSummaries, "/api/ai/questions");
 
         AiQuestionGenerateResponse aiQuestion = aiGatewayClient.generateQuestion(aiRequest);
 
@@ -277,14 +283,60 @@ public class SessionService {
     }
 
     private List<AiQuestionGenerateRequest.DocumentSummary> getDocumentSummaries(Long sessionId, Long userId) {
-        return documentRepository.findAllBySessionIdAndUserIdAndStatusOrderByCreatedAtDesc(
+        List<Document> documents = documentRepository.findAllBySessionIdAndUserIdAndStatusInOrderByCreatedAtDesc(
                 sessionId,
                 userId,
-                DocumentStatus.READY_FOR_AI
-            ).stream()
+                List.of(DocumentStatus.READY_FOR_AI, DocumentStatus.COMPLETED)
+            );
+
+        return documents.stream()
             .filter(document -> document.getSummary() != null && !document.getSummary().isBlank())
             .map(this::toDocumentSummary)
             .toList();
+    }
+
+    private void logQuestionRequest(
+        Session session,
+        User user,
+        int questionIndex,
+        List<String> previousQuestions,
+        List<AiQuestionGenerateRequest.PreviousTurn> previousTurns,
+        List<AiRagContextItem> ragContext,
+        AiPlanHints planHints,
+        List<AiQuestionGenerateRequest.DocumentSummary> documentSummaries,
+        String aiQuestionsPath
+    ) {
+        List<Document> allCandidateDocuments = documentRepository.findAllBySessionIdAndUserIdAndStatusInOrderByCreatedAtDesc(
+            session.getId(),
+            user.getId(),
+            List.of(DocumentStatus.READY_FOR_AI, DocumentStatus.COMPLETED)
+        );
+        List<Long> includedDocumentIds = documentSummaries.stream().map(AiQuestionGenerateRequest.DocumentSummary::documentId).toList();
+        List<Integer> summaryLengths = documentSummaries.stream().map(summary -> summary.summary().length()).toList();
+        List<Long> excludedDocumentIds = allCandidateDocuments.stream()
+            .filter(document -> document.getSummary() == null || document.getSummary().isBlank())
+            .map(Document::getId)
+            .toList();
+
+        log.info(
+            "[AI_QUESTION_REQUEST] sessionId={}, userId={}, questionIndex={}, mode={}, target={}, difficulty={}, previousQuestionsCount={}, previousTurnsCount={}, ragContextCount={}, planHintsPresent={}, documentSummariesCount={}, documentIds={}, summaryLengths={}, excludedSummaryCount={}, excludedDocumentIds={}, aiQuestionsPath={}",
+            session.getId(),
+            user.getId(),
+            questionIndex,
+            session.getMode(),
+            session.getTarget(),
+            session.getDifficulty(),
+            previousQuestions.size(),
+            previousTurns.size(),
+            ragContext.size(),
+            planHints != null,
+            documentSummaries.size(),
+            includedDocumentIds,
+            summaryLengths,
+            excludedDocumentIds.size(),
+            excludedDocumentIds,
+            aiQuestionsPath
+        );
     }
 
     private AiQuestionGenerateRequest.DocumentSummary toDocumentSummary(Document document) {
