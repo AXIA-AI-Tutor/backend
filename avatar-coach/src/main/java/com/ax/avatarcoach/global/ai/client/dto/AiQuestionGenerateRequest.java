@@ -35,7 +35,11 @@ public record AiQuestionGenerateRequest(
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonProperty("plan_hints")
-    AiPlanHints planHints
+    AiPlanHints planHints,
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonProperty("document_summaries")
+    List<DocumentSummary> documentSummaries
 ) {
     public record PreviousTurn(
         @JsonProperty("answer_id")
@@ -54,6 +58,20 @@ public record AiQuestionGenerateRequest(
 
         @JsonProperty("improvement_example")
         String improvementExample
+    ) {
+    }
+
+    public record DocumentSummary(
+        @JsonProperty("document_id")
+        Long documentId,
+
+        @JsonProperty("doc_type")
+        String docType,
+
+        @JsonProperty("original_file_name")
+        String originalFileName,
+
+        String summary
     ) {
     }
 }
