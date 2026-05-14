@@ -26,6 +26,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
     implementation 'com.google.cloud:google-cloud-storage:2.38.0'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.4'
+    implementation 'org.apache.poi:poi-ooxml:5.4.1'
 
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'

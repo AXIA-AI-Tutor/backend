@@ -16,9 +16,6 @@ import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
 import com.ax.avatarcoach.domain.user.entity.User;
 import com.ax.avatarcoach.domain.user.repository.UserRepository;
 import com.ax.avatarcoach.global.config.GcpStorageProperties;
-import com.ax.avatarcoach.global.ai.client.AiGatewayClient;
-import com.ax.avatarcoach.global.ai.client.dto.AiDocumentSummaryRequest;
-import com.ax.avatarcoach.global.ai.client.dto.AiDocumentSummaryResponse;
 import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import com.ax.avatarcoach.global.security.oauth.GoogleOAuth2UserInfo;
@@ -55,8 +52,8 @@ public class DocumentService {
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
     private final StorageService storageService;
+    private final DocumentTextExtractor documentTextExtractor;
     private final GcpStorageProperties gcpStorageProperties;
-    private final AiGatewayClient aiGatewayClient;
 
     @Transactional
     public DocumentMetadataResponse createMetadata(DocumentMetadataCreateRequest request, OAuth2User oAuth2User) {
@@ -228,59 +225,42 @@ public class DocumentService {
         }
 
         DocumentStatus beforeStatus = document.getStatus();
+        boolean hasStorageBucket = document.getStorageBucket() != null && !document.getStorageBucket().isBlank();
+        boolean hasStoragePath = document.getStoragePath() != null && !document.getStoragePath().isBlank();
+        if (!hasStorageBucket || !hasStoragePath) {
+            throw new CustomException(ErrorCode.DOCUMENT_FILE_NOT_FOUND);
+        }
+
         log.info(
-            "[DOCUMENT_SUMMARY_REQUEST] documentId={}, sessionId={}, userId={}, docType={}, uploadStatus={}, statusBefore={}, aiSummaryPath={}",
+            "[DOCUMENT_TEXT_EXTRACT_REQUEST] documentId={}, sessionId={}, userId={}, docType={}, fileType={}, originalFileName={}, hasStorageBucket={}, hasStoragePath={}",
             document.getId(),
             document.getSession().getId(),
             document.getUser().getId(),
             document.getDocType(),
-            document.getUploadStatus(),
-            beforeStatus,
-            "/api/ai/documents/summary"
+            document.getFileType(),
+            document.getOriginalFileName(),
+            hasStorageBucket,
+            hasStoragePath
         );
 
         document.markProcessing();
         try {
-            AiDocumentSummaryResponse response = aiGatewayClient.summarizeDocument(new AiDocumentSummaryRequest(
-                document.getUser().getId(),
-                document.getSession().getId(),
-                document.getId(),
-                document.getDocType().name(),
-                document.getStorageBucket(),
-                document.getStoragePath(),
-                document.getOriginalFileName(),
-                document.getFileType()
-            ));
-
-            String summary = response == null ? null : response.summary();
-            if (summary == null || summary.isBlank()) {
-                log.warn(
-                    "[DOCUMENT_SUMMARY_FAILED] documentId={}, sessionId={}, userId={}, statusBefore={}, statusAfter={}, aiSummaryPath={}, aiResponseStatus={}, reason=empty_summary",
-                    document.getId(),
-                    document.getSession().getId(),
-                    document.getUser().getId(),
-                    beforeStatus,
-                    DocumentStatus.FAILED,
-                    "/api/ai/documents/summary",
-                    200
-                );
-                document.markSummaryFailed();
-                throw new CustomException(ErrorCode.DOCUMENT_SUMMARY_EMPTY);
+            byte[] fileBytes = storageService.downloadObject(document.getStorageBucket(), document.getStoragePath());
+            String extractedText = documentTextExtractor.extractText(fileBytes, document.getFileType(), document.getOriginalFileName());
+            if (extractedText == null || extractedText.isBlank()) {
+                throw new CustomException(ErrorCode.DOCUMENT_TEXT_EMPTY);
             }
+            log.info("[DOCUMENT_TEXT_EXTRACTED] documentId={}, extractedTextLength={}, fileType={}",
+                document.getId(), extractedText.length(), document.getFileType());
 
-            document.completeSummary(summary);
+            document.completeSummary(extractedText);
             log.info(
-                "[DOCUMENT_SUMMARY_SAVED] documentId={}, sessionId={}, userId={}, docType={}, uploadStatus={}, statusBefore={}, statusAfter={}, summaryLength={}, aiSummaryPath={}, aiResponseStatus={}",
+                "[DOCUMENT_SUMMARY_SAVED] documentId={}, sessionId={}, userId={}, summaryLength={}, status={}",
                 document.getId(),
                 document.getSession().getId(),
                 document.getUser().getId(),
-                document.getDocType(),
-                document.getUploadStatus(),
-                beforeStatus,
-                document.getStatus(),
-                summary.length(),
-                "/api/ai/documents/summary",
-                200
+                extractedText.length(),
+                document.getStatus()
             );
             return document;
         } catch (RuntimeException exception) {
@@ -288,18 +268,11 @@ public class DocumentService {
                 document.markSummaryFailed();
             }
             log.warn(
-                "[DOCUMENT_SUMMARY_FAILED] documentId={}, sessionId={}, userId={}, docType={}, uploadStatus={}, statusBefore={}, statusAfter={}, aiSummaryPath={}, aiResponseStatus={}, errorType={}",
+                "[DOCUMENT_SUMMARY_FAILED] documentId={}, exceptionClass={}, exceptionMessage={}, status={}",
                 document.getId(),
-                document.getSession().getId(),
-                document.getUser().getId(),
-                document.getDocType(),
-                document.getUploadStatus(),
-                beforeStatus,
-                document.getStatus(),
-                "/api/ai/documents/summary",
-                -1,
                 exception.getClass().getSimpleName(),
-                exception
+                exception.getMessage(),
+                document.getStatus()
             );
             throw exception;
         }

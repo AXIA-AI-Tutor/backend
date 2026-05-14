@@ -20,4 +20,9 @@ public class DisabledStorageService implements StorageService {
     public ObjectMetadata getObjectMetadata(String bucketName, String objectPath) {
         throw new CustomException(ErrorCode.STORAGE_DISABLED);
     }
+
+    @Override
+    public byte[] downloadObject(String bucketName, String objectPath) {
+        throw new CustomException(ErrorCode.STORAGE_DISABLED);
+    }
 }
