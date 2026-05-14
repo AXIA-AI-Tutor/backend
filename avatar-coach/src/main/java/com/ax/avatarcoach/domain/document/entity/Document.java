@@ -105,6 +105,19 @@ public class Document extends BaseTimeEntity {
         this.status = DocumentStatus.FAILED;
     }
 
+    public void markProcessing() {
+        this.status = DocumentStatus.PROCESSING;
+    }
+
+    public void completeSummary(String summary) {
+        this.summary = summary;
+        this.status = DocumentStatus.COMPLETED;
+    }
+
+    public void markSummaryFailed() {
+        this.status = DocumentStatus.FAILED;
+    }
+
     public boolean isOwnedBy(User user) {
         return this.user != null && user != null && Objects.equals(this.user.getId(), user.getId());
     }

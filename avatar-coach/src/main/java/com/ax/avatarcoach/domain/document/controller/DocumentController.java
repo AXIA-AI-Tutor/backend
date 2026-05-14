@@ -53,4 +53,13 @@ public class DocumentController {
     ) {
         return ApiResponse.success(DocumentResponse.from(documentService.completeUpload(documentId, oAuth2User)));
     }
+
+    @Operation(summary = "문서 요약 생성", description = "현재 로그인 사용자의 문서 요약을 AI Gateway로 생성하고 저장합니다.")
+    @PostMapping("/{documentId}/summary")
+    public ApiResponse<DocumentResponse> generateSummary(
+        @PathVariable Long documentId,
+        @AuthenticationPrincipal OAuth2User oAuth2User
+    ) {
+        return ApiResponse.success(DocumentResponse.from(documentService.generateSummary(documentId, oAuth2User)));
+    }
 }

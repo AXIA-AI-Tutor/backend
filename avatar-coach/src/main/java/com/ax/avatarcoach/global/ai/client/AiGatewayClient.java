@@ -162,6 +162,18 @@ public class AiGatewayClient {
         }
     }
 
+    public AiDocumentSummaryResponse summarizeDocument(AiDocumentSummaryRequest request) {
+        try {
+            return aiRestClient.post()
+                .uri("/api/ai/documents/summary")
+                .body(request)
+                .retrieve()
+                .body(AiDocumentSummaryResponse.class);
+        } catch (RestClientException exception) {
+            throw toAiGatewayException(exception);
+        }
+    }
+
     private CustomException toAiGatewayException(RestClientException exception) {
         if (exception instanceof ResourceAccessException) {
             log.warn("AI server connection failed", exception);
