@@ -4,6 +4,8 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.HttpMethod;
 import com.google.cloud.storage.Storage;
+import com.ax.avatarcoach.global.exception.CustomException;
+import com.ax.avatarcoach.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -47,5 +49,19 @@ public class GcsStorageService implements StorageService {
             return null;
         }
         return new ObjectMetadata(blob.getSize(), blob.getContentType());
+    }
+
+    @Override
+    public byte[] downloadObject(String bucketName, String objectPath) {
+        BlobId blobId = BlobId.of(bucketName, objectPath);
+        com.google.cloud.storage.Blob blob = storage.get(blobId);
+        if (blob == null || !blob.exists()) {
+            throw new CustomException(ErrorCode.DOCUMENT_FILE_NOT_FOUND);
+        }
+        byte[] content = blob.getContent();
+        if (content == null) {
+            throw new CustomException(ErrorCode.DOCUMENT_FILE_NOT_FOUND);
+        }
+        return content;
     }
 }

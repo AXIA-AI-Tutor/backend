@@ -8,6 +8,8 @@ public interface StorageService {
 
     ObjectMetadata getObjectMetadata(String bucketName, String objectPath);
 
+    byte[] downloadObject(String bucketName, String objectPath);
+
     record SignedUploadUrl(String uploadUrl) {
     }
 
