@@ -5,6 +5,7 @@ import com.ax.avatarcoach.domain.document.dto.DocumentUploadUrlRequest;
 import com.ax.avatarcoach.domain.document.dto.DocumentUploadUrlResponse;
 import com.ax.avatarcoach.domain.document.dto.DocumentMetadataResponse;
 import com.ax.avatarcoach.domain.document.entity.Document;
+import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
 import com.ax.avatarcoach.domain.document.entity.StorageProvider;
 import com.ax.avatarcoach.domain.document.entity.UploadStatus;
 import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
@@ -15,6 +16,9 @@ import com.ax.avatarcoach.domain.user.entity.OAuthProvider;
 import com.ax.avatarcoach.domain.user.entity.User;
 import com.ax.avatarcoach.domain.user.repository.UserRepository;
 import com.ax.avatarcoach.global.config.GcpStorageProperties;
+import com.ax.avatarcoach.global.ai.client.AiGatewayClient;
+import com.ax.avatarcoach.global.ai.client.dto.AiDocumentSummaryRequest;
+import com.ax.avatarcoach.global.ai.client.dto.AiDocumentSummaryResponse;
 import com.ax.avatarcoach.global.exception.CustomException;
 import com.ax.avatarcoach.global.exception.ErrorCode;
 import com.ax.avatarcoach.global.security.oauth.GoogleOAuth2UserInfo;
@@ -52,6 +56,7 @@ public class DocumentService {
     private final SessionRepository sessionRepository;
     private final StorageService storageService;
     private final GcpStorageProperties gcpStorageProperties;
+    private final AiGatewayClient aiGatewayClient;
 
     @Transactional
     public DocumentMetadataResponse createMetadata(DocumentMetadataCreateRequest request, OAuth2User oAuth2User) {
@@ -203,6 +208,101 @@ public class DocumentService {
             document.getUploadedAt()
         );
         return document;
+    }
+
+    @Transactional
+    public Document generateSummary(Long documentId, OAuth2User oAuth2User) {
+        User user = getCurrentUser(oAuth2User);
+        Document document = documentRepository.findById(documentId)
+            .orElseThrow(() -> new CustomException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        if (!document.isOwnedBy(user)) {
+            throw new CustomException(ErrorCode.DOCUMENT_ACCESS_DENIED);
+        }
+
+        if (document.getSummary() != null && !document.getSummary().isBlank()) {
+            throw new CustomException(ErrorCode.DOCUMENT_SUMMARY_ALREADY_EXISTS);
+        }
+        if (document.getUploadStatus() != UploadStatus.UPLOADED || document.getStatus() != DocumentStatus.READY_FOR_AI) {
+            throw new CustomException(ErrorCode.DOCUMENT_SUMMARY_NOT_ALLOWED);
+        }
+
+        DocumentStatus beforeStatus = document.getStatus();
+        log.info(
+            "[DOCUMENT_SUMMARY_REQUEST] documentId={}, sessionId={}, userId={}, docType={}, uploadStatus={}, statusBefore={}, aiSummaryPath={}",
+            document.getId(),
+            document.getSession().getId(),
+            document.getUser().getId(),
+            document.getDocType(),
+            document.getUploadStatus(),
+            beforeStatus,
+            "/api/ai/documents/summary"
+        );
+
+        document.markProcessing();
+        try {
+            AiDocumentSummaryResponse response = aiGatewayClient.summarizeDocument(new AiDocumentSummaryRequest(
+                document.getUser().getId(),
+                document.getSession().getId(),
+                document.getId(),
+                document.getDocType().name(),
+                document.getStorageBucket(),
+                document.getStoragePath(),
+                document.getOriginalFileName(),
+                document.getFileType()
+            ));
+
+            String summary = response == null ? null : response.summary();
+            if (summary == null || summary.isBlank()) {
+                log.warn(
+                    "[DOCUMENT_SUMMARY_FAILED] documentId={}, sessionId={}, userId={}, statusBefore={}, statusAfter={}, aiSummaryPath={}, aiResponseStatus={}, reason=empty_summary",
+                    document.getId(),
+                    document.getSession().getId(),
+                    document.getUser().getId(),
+                    beforeStatus,
+                    DocumentStatus.FAILED,
+                    "/api/ai/documents/summary",
+                    200
+                );
+                document.markSummaryFailed();
+                throw new CustomException(ErrorCode.DOCUMENT_SUMMARY_EMPTY);
+            }
+
+            document.completeSummary(summary);
+            log.info(
+                "[DOCUMENT_SUMMARY_SAVED] documentId={}, sessionId={}, userId={}, docType={}, uploadStatus={}, statusBefore={}, statusAfter={}, summaryLength={}, aiSummaryPath={}, aiResponseStatus={}",
+                document.getId(),
+                document.getSession().getId(),
+                document.getUser().getId(),
+                document.getDocType(),
+                document.getUploadStatus(),
+                beforeStatus,
+                document.getStatus(),
+                summary.length(),
+                "/api/ai/documents/summary",
+                200
+            );
+            return document;
+        } catch (RuntimeException exception) {
+            if (document.getStatus() == DocumentStatus.PROCESSING) {
+                document.markSummaryFailed();
+            }
+            log.warn(
+                "[DOCUMENT_SUMMARY_FAILED] documentId={}, sessionId={}, userId={}, docType={}, uploadStatus={}, statusBefore={}, statusAfter={}, aiSummaryPath={}, aiResponseStatus={}, errorType={}",
+                document.getId(),
+                document.getSession().getId(),
+                document.getUser().getId(),
+                document.getDocType(),
+                document.getUploadStatus(),
+                beforeStatus,
+                document.getStatus(),
+                "/api/ai/documents/summary",
+                -1,
+                exception.getClass().getSimpleName(),
+                exception
+            );
+            throw exception;
+        }
     }
 
 
