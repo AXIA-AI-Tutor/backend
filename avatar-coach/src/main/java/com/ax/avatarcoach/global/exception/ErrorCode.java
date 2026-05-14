@@ -15,6 +15,7 @@ public enum ErrorCode {
     SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "SESSION_NOT_FOUND", "세션을 찾을 수 없습니다."),
     SESSION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "SESSION_ACCESS_DENIED", "해당 세션에 접근할 수 없습니다."),
     SESSION_DOCUMENT_REQUIRED(HttpStatus.BAD_REQUEST, "SESSION_DOCUMENT_REQUIRED", "세션을 시작하려면 업로드 완료된 문서가 필요합니다."),
+    DOCUMENT_SUMMARY_NOT_READY(HttpStatus.CONFLICT, "DOCUMENT_SUMMARY_NOT_READY", "업로드 완료된 문서의 요약 생성이 아직 완료되지 않았습니다."),
     ANSWER_NOT_FOUND(HttpStatus.NOT_FOUND, "ANSWER_NOT_FOUND", "답변을 찾을 수 없습니다."),
     ANSWER_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ANSWER_ACCESS_DENIED", "해당 답변에 접근할 수 없습니다."),
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_NOT_FOUND", "리포트를 찾을 수 없습니다."),

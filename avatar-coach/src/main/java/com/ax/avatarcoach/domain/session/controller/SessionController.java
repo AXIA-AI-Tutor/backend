@@ -58,7 +58,8 @@ public class SessionController {
     @Operation(
         summary = "세션 시작",
         description = "READY 상태의 세션에 최종 옵션을 저장하고 IN_PROGRESS 상태로 변경합니다. \n" +
-            "READY_FOR_AI 상태의 업로드 완료 문서가 1개 이상 필요합니다. \n" +
+            "업로드 완료(UPLOADED) 문서가 1개 이상 필요하며, READY_FOR_AI 또는 COMPLETED 상태를 인정합니다. \n" +
+            "요약(summary) non-blank 문서가 없으면 DOCUMENT_SUMMARY_NOT_READY를 반환합니다. \n" +
             "MVP-2 멀티턴 흐름에서 1번 질문은 이 API 응답으로 반환합니다. \n" +
             "2~4번 질문은 답변 제출 후 POST /api/sessions/{sessionId}/questions/next API로 생성합니다. \n" +
             "AI 서버 연결 실패 시 AI_SERVER_UNAVAILABLE, AI 서버 응답 오류 시 AI_SERVER_ERROR를 반환합니다."
