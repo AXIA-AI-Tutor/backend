@@ -3,8 +3,9 @@ package com.ax.avatarcoach.domain.session.service;
 import com.ax.avatarcoach.domain.answer.entity.Answer;
 import com.ax.avatarcoach.domain.answer.repository.AnswerRepository;
 import com.ax.avatarcoach.domain.corpus.service.CorpusRagContextService;
-import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
 import com.ax.avatarcoach.domain.document.entity.Document;
+import com.ax.avatarcoach.domain.document.entity.DocumentStatus;
+import com.ax.avatarcoach.domain.document.entity.UploadStatus;
 import com.ax.avatarcoach.domain.document.repository.DocumentRepository;
 import com.ax.avatarcoach.domain.feedback.entity.Feedback;
 import com.ax.avatarcoach.domain.feedback.repository.FeedbackRepository;
@@ -101,15 +102,22 @@ public class SessionService {
         Session session = sessionRepository.findByIdAndUser(sessionId, user)
             .orElseThrow(() -> new CustomException(ErrorCode.INVALID_REQUEST));
 
-        boolean hasReadyDocument = documentRepository.existsBySessionIdAndUserIdAndStatus(
-            sessionId,
-            user.getId(),
-            DocumentStatus.READY_FOR_AI
-        );
+        List<Document> uploadedDocuments = findSessionStartCandidateDocuments(sessionId, user.getId());
+        List<Document> summaryReadyDocuments = uploadedDocuments.stream()
+            .filter(this::hasNonBlankSummary)
+            .toList();
 
-        if (!hasReadyDocument) {
+        if (uploadedDocuments.isEmpty()) {
+            logSessionStartBlocked(sessionId, user.getId(), uploadedDocuments, summaryReadyDocuments, ErrorCode.SESSION_DOCUMENT_REQUIRED);
             throw new CustomException(ErrorCode.SESSION_DOCUMENT_REQUIRED);
         }
+
+        if (summaryReadyDocuments.isEmpty()) {
+            logSessionStartBlocked(sessionId, user.getId(), uploadedDocuments, summaryReadyDocuments, ErrorCode.DOCUMENT_SUMMARY_NOT_READY);
+            throw new CustomException(ErrorCode.DOCUMENT_SUMMARY_NOT_READY);
+        }
+
+        logSessionStartReady(sessionId, user.getId(), uploadedDocuments, summaryReadyDocuments);
 
         session.start(
             request.mode(),
@@ -263,6 +271,45 @@ public class SessionService {
         return sessionEventService.getSessionEvents(session);
     }
 
+
+    private List<Document> findSessionStartCandidateDocuments(Long sessionId, Long userId) {
+        return documentRepository.findAllBySessionIdAndUserIdAndUploadStatusAndStatusInOrderByCreatedAtDesc(
+            sessionId,
+            userId,
+            UploadStatus.UPLOADED,
+            List.of(DocumentStatus.READY_FOR_AI, DocumentStatus.COMPLETED)
+        );
+    }
+
+    private boolean hasNonBlankSummary(Document document) {
+        return document.getSummary() != null && !document.getSummary().isBlank();
+    }
+
+    private void logSessionStartReady(Long sessionId, Long userId, List<Document> uploadedDocuments, List<Document> summaryReadyDocuments) {
+        log.info(
+            "[SESSION_START_READY] sessionId={}, userId={}, uploadedDocumentCount={}, summaryReadyDocumentCount={}, documentStatuses={}, uploadStatuses={}",
+            sessionId,
+            userId,
+            uploadedDocuments.size(),
+            summaryReadyDocuments.size(),
+            uploadedDocuments.stream().map(Document::getStatus).toList(),
+            uploadedDocuments.stream().map(Document::getUploadStatus).toList()
+        );
+    }
+
+    private void logSessionStartBlocked(Long sessionId, Long userId, List<Document> uploadedDocuments, List<Document> summaryReadyDocuments, ErrorCode blockedReason) {
+        log.info(
+            "[SESSION_START_BLOCKED] sessionId={}, userId={}, uploadedDocumentCount={}, summaryReadyDocumentCount={}, documentStatuses={}, uploadStatuses={}, blockedReason={}",
+            sessionId,
+            userId,
+            uploadedDocuments.size(),
+            summaryReadyDocuments.size(),
+            uploadedDocuments.stream().map(Document::getStatus).toList(),
+            uploadedDocuments.stream().map(Document::getUploadStatus).toList(),
+            blockedReason.getCode()
+        );
+    }
+
     private String buildRagQuery(List<AiQuestionGenerateRequest.PreviousTurn> previousTurns) {
         if (previousTurns == null || previousTurns.isEmpty()) {
             return "";
@@ -290,7 +337,7 @@ public class SessionService {
             );
 
         return documents.stream()
-            .filter(document -> document.getSummary() != null && !document.getSummary().isBlank())
+            .filter(this::hasNonBlankSummary)
             .map(this::toDocumentSummary)
             .toList();
     }
@@ -314,7 +361,7 @@ public class SessionService {
         List<Long> includedDocumentIds = documentSummaries.stream().map(AiQuestionGenerateRequest.DocumentSummary::documentId).toList();
         List<Integer> summaryLengths = documentSummaries.stream().map(summary -> summary.summary().length()).toList();
         List<Long> excludedDocumentIds = allCandidateDocuments.stream()
-            .filter(document -> document.getSummary() == null || document.getSummary().isBlank())
+            .filter(document -> !hasNonBlankSummary(document))
             .map(Document::getId)
             .toList();
 
